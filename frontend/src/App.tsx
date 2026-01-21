@@ -34,6 +34,8 @@ import {
   Mail,
   Sparkles,
   Download,
+  Camera,
+  Smartphone,
 } from 'lucide-react';
 
 // Lead info stored in session
@@ -1007,8 +1009,19 @@ function UploadPage() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [leadInfo, setLeadInfo] = useState<LeadInfo | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Load lead info from session
   useEffect(() => {
@@ -1032,6 +1045,8 @@ function UploadPage() {
     }
 
     setUploadedFiles((prev) => [...prev, ...newFiles]);
+    // Reset file input
+    e.target.value = '';
   }, []);
 
   const handleAnalyze = useCallback(async () => {
@@ -1134,43 +1149,120 @@ function UploadPage() {
           </div>
         )}
 
-        <label className="block border-2 border-dashed border-white/10 hover:border-emerald-500/50 rounded-2xl p-12 text-center cursor-pointer transition-colors">
-          <input
-            type="file"
-            multiple
-            accept=".pdf,image/*"
-            onChange={handleFileUpload}
-            className="hidden"
-          />
-          <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-          <p className="text-lg font-medium mb-2">Drop files or click to browse</p>
-          <p className="text-sm text-slate-500">PDF or image files</p>
-        </label>
+        {/* Mobile-optimized upload options */}
+        {isMobile ? (
+          <div className="space-y-4">
+            {/* Camera capture - primary action on mobile */}
+            <label className="block border-2 border-emerald-500/50 bg-emerald-500/5 hover:bg-emerald-500/10 rounded-2xl p-8 text-center cursor-pointer transition-colors active:scale-[0.98]">
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center mx-auto mb-4">
+                <Camera className="w-8 h-8 text-white" />
+              </div>
+              <p className="text-lg font-medium mb-1">Take Photo of Statement</p>
+              <p className="text-sm text-slate-400">Use your camera to capture</p>
+            </label>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-slate-500 text-sm">or</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
+            {/* File picker - secondary action */}
+            <label className="block border-2 border-dashed border-white/10 hover:border-emerald-500/50 rounded-2xl p-6 text-center cursor-pointer transition-colors active:scale-[0.98]">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <Upload className="w-10 h-10 text-slate-400 mx-auto mb-3" />
+              <p className="font-medium mb-1">Upload from Files</p>
+              <p className="text-sm text-slate-500">PDF or image files</p>
+            </label>
+
+            {/* Mobile tip */}
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20">
+              <Smartphone className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-slate-300">
+                <span className="font-medium text-cyan-400">Tip:</span> For best results,
+                photograph each page of your statement individually with good lighting.
+              </p>
+            </div>
+          </div>
+        ) : (
+          /* Desktop upload */
+          <label className="block border-2 border-dashed border-white/10 hover:border-emerald-500/50 rounded-2xl p-12 text-center cursor-pointer transition-colors">
+            <input
+              type="file"
+              multiple
+              accept=".pdf,image/*"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+            <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" />
+            <p className="text-lg font-medium mb-2">Drop files or click to browse</p>
+            <p className="text-sm text-slate-500">PDF or image files</p>
+          </label>
+        )}
 
         {uploadedFiles.length > 0 && (
           <div className="mt-6 space-y-3">
             <h3 className="font-medium flex items-center gap-2">
               <FileText className="w-5 h-5 text-emerald-400" />
-              Files ({uploadedFiles.length})
+              {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} ready
             </h3>
             {uploadedFiles.map((file, i) => (
               <div
                 key={i}
                 className="flex items-center justify-between p-4 rounded-lg bg-slate-900/50 border border-white/5"
               >
-                <span>{file.name}</span>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                    {file.file.type === 'application/pdf' ? (
+                      <FileText className="w-5 h-5 text-emerald-400" />
+                    ) : (
+                      <Camera className="w-5 h-5 text-cyan-400" />
+                    )}
+                  </div>
+                  <span className="truncate text-sm">{file.name}</span>
+                </div>
                 <button
                   onClick={() => setUploadedFiles((f) => f.filter((_, idx) => idx !== i))}
-                  className="text-slate-400 hover:text-red-400"
+                  className="ml-2 p-2 -mr-2 text-slate-400 hover:text-red-400 active:text-red-500 touch-manipulation"
+                  aria-label="Remove file"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             ))}
 
+            {/* Add more files on mobile */}
+            {isMobile && (
+              <label className="flex items-center justify-center gap-2 p-3 rounded-lg border border-dashed border-white/10 text-slate-400 cursor-pointer active:bg-white/5">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Plus className="w-4 h-4" />
+                <span className="text-sm">Add more files</span>
+              </label>
+            )}
+
             <button
               onClick={handleAnalyze}
-              className="w-full mt-6 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white px-8 py-4 rounded-xl text-lg font-medium"
+              className="w-full mt-4 inline-flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 active:from-emerald-700 active:to-cyan-700 text-white px-8 py-4 rounded-xl text-lg font-medium touch-manipulation transition-all active:scale-[0.98]"
             >
               Analyze Statements <ArrowRight className="w-5 h-5" />
             </button>
