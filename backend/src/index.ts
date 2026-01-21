@@ -6,6 +6,7 @@ import path from 'path';
 import authRoutes from './routes/auth';
 import statementsRoutes from './routes/statements';
 import reportsRoutes from './routes/reports';
+import leadsRoutes from './routes/leads';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,6 +28,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/statements', statementsRoutes);
 app.use('/api/reports', reportsRoutes);
+app.use('/api/leads', leadsRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

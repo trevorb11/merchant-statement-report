@@ -31,7 +31,16 @@ import {
   Plus,
   Trash2,
   Eye,
+  Mail,
+  Sparkles,
 } from 'lucide-react';
+
+// Lead info stored in session
+interface LeadInfo {
+  id: string;
+  email: string;
+  businessName?: string;
+}
 
 // Utility functions
 const formatCurrency = (n: number) =>
@@ -160,10 +169,10 @@ function LandingPage() {
         </p>
 
         <button
-          onClick={() => navigate('/upload')}
+          onClick={() => navigate('/get-started')}
           className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white px-8 py-4 rounded-xl text-lg font-medium shadow-lg shadow-emerald-500/25 transition-all"
         >
-          Analyze My Statements <ArrowRight className="w-5 h-5" />
+          Get Your Free Analysis <ArrowRight className="w-5 h-5" />
         </button>
 
         <div className="flex flex-wrap gap-6 mt-10 text-sm text-slate-500">
@@ -202,6 +211,143 @@ function LandingPage() {
               <p className="text-sm text-slate-400">{f.desc}</p>
             </div>
           ))}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// Get Started Page - Email capture before upload
+function GetStartedPage() {
+  const [email, setEmail] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  // If already authenticated, go straight to upload
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/upload');
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const { lead, isReturning } = await api.captureLead(email, businessName);
+
+      // Store lead info in session
+      const leadInfo: LeadInfo = {
+        id: lead.id,
+        email: lead.email,
+        businessName: lead.businessName,
+      };
+      sessionStorage.setItem('lead_info', JSON.stringify(leadInfo));
+
+      navigate('/upload');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-white">
+      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/20 via-transparent to-transparent" />
+      </div>
+      <Nav />
+
+      <main className="relative z-10 max-w-md mx-auto px-6 py-16">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center mx-auto mb-6">
+            <Sparkles className="w-8 h-8" />
+          </div>
+          <h1 className="text-3xl font-bold mb-3">Get Your Free Analysis</h1>
+          <p className="text-slate-400">
+            Enter your email and we'll send you a personalized financial health report.
+          </p>
+        </div>
+
+        {error && (
+          <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Business Name</label>
+            <input
+              type="text"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="Your Business Name"
+              className="w-full px-4 py-3 rounded-lg bg-slate-900/50 border border-white/10 focus:border-emerald-500 focus:outline-none placeholder:text-slate-600"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-slate-400 mb-2">Email Address *</label>
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@business.com"
+                className="w-full pl-12 pr-4 py-3 rounded-lg bg-slate-900/50 border border-white/10 focus:border-emerald-500 focus:outline-none placeholder:text-slate-600"
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white px-8 py-4 rounded-xl text-lg font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                Continue to Upload <ArrowRight className="w-5 h-5" />
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-8 flex items-center gap-4">
+          <div className="flex-1 h-px bg-white/10" />
+          <span className="text-sm text-slate-500">or</span>
+          <div className="flex-1 h-px bg-white/10" />
+        </div>
+
+        <p className="text-center mt-6 text-slate-400">
+          Already have an account?{' '}
+          <button onClick={() => navigate('/login')} className="text-emerald-400 hover:underline">
+            Sign in
+          </button>
+        </p>
+
+        <div className="mt-10 p-4 rounded-xl bg-slate-900/30 border border-white/5">
+          <div className="flex items-start gap-3">
+            <Shield className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-slate-300">Your data is secure</p>
+              <p className="text-xs text-slate-500 mt-1">
+                We use bank-level encryption and never share your information with third parties.
+              </p>
+            </div>
+          </div>
         </div>
       </main>
     </div>
@@ -402,8 +548,17 @@ function UploadPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [leadInfo, setLeadInfo] = useState<LeadInfo | null>(null);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Load lead info from session
+  useEffect(() => {
+    const storedLead = sessionStorage.getItem('lead_info');
+    if (storedLead) {
+      setLeadInfo(JSON.parse(storedLead));
+    }
+  }, []);
 
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -442,6 +597,15 @@ function UploadPage() {
       clearInterval(progressInterval);
       setAnalysisProgress(100);
 
+      // Mark lead as having completed analysis
+      if (leadInfo?.id) {
+        try {
+          await api.markLeadAnalysisCompleted(leadInfo.id);
+        } catch (e) {
+          // Non-critical, continue anyway
+        }
+      }
+
       // If user is authenticated and analysis was saved, create a report
       if (isAuthenticated && saved) {
         // The statements were already saved, now create a report
@@ -458,7 +622,7 @@ function UploadPage() {
       setError(err instanceof Error ? err.message : 'Analysis failed');
       setIsAnalyzing(false);
     }
-  }, [uploadedFiles, isAuthenticated, navigate]);
+  }, [uploadedFiles, isAuthenticated, navigate, leadInfo]);
 
   if (isAnalyzing) {
     return (
@@ -498,6 +662,11 @@ function UploadPage() {
       <Nav />
 
       <main className="relative z-10 max-w-2xl mx-auto px-6 py-12">
+        {leadInfo?.businessName && (
+          <p className="text-emerald-400 text-center mb-2">
+            Welcome, {leadInfo.businessName}!
+          </p>
+        )}
         <h1 className="text-3xl font-bold mb-2 text-center">Upload Bank Statements</h1>
         <p className="text-slate-400 text-center mb-8">Upload 1-3 months for the best analysis</p>
 
@@ -1272,6 +1441,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/get-started" element={<GetStartedPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/upload" element={<UploadPage />} />

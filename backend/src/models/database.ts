@@ -67,11 +67,28 @@ db.exec(`
     FOREIGN KEY (report_id) REFERENCES reports(id) ON DELETE CASCADE
   );
 
+  -- Leads table for capturing potential customers before registration
+  CREATE TABLE IF NOT EXISTS leads (
+    id TEXT PRIMARY KEY,
+    email TEXT NOT NULL,
+    business_name TEXT,
+    phone TEXT,
+    source TEXT DEFAULT 'organic',
+    status TEXT DEFAULT 'new',
+    converted_user_id TEXT,
+    analysis_completed INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (converted_user_id) REFERENCES users(id) ON DELETE SET NULL
+  );
+
   -- Create indexes for faster queries
   CREATE INDEX IF NOT EXISTS idx_statements_user_id ON statements(user_id);
   CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id);
   CREATE INDEX IF NOT EXISTS idx_monthly_snapshots_user_id ON monthly_snapshots(user_id);
   CREATE INDEX IF NOT EXISTS idx_monthly_snapshots_month ON monthly_snapshots(month);
+  CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
+  CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
 `);
 
 export default db;
@@ -186,4 +203,47 @@ export const createMonthlySnapshot = db.prepare(`
 
 export const findMonthlySnapshotsByUserId = db.prepare<[string], MonthlySnapshot>(`
   SELECT * FROM monthly_snapshots WHERE user_id = ? ORDER BY month DESC
+`);
+
+// Lead functions
+export interface Lead {
+  id: string;
+  email: string;
+  business_name: string | null;
+  phone: string | null;
+  source: string;
+  status: string;
+  converted_user_id: string | null;
+  analysis_completed: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export const createLead = db.prepare(`
+  INSERT INTO leads (id, email, business_name, phone, source)
+  VALUES (?, ?, ?, ?, ?)
+`);
+
+export const findLeadByEmail = db.prepare<[string], Lead>(`
+  SELECT * FROM leads WHERE email = ? ORDER BY created_at DESC LIMIT 1
+`);
+
+export const findLeadById = db.prepare<[string], Lead>(`
+  SELECT * FROM leads WHERE id = ?
+`);
+
+export const updateLeadStatus = db.prepare(`
+  UPDATE leads SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`);
+
+export const updateLeadAnalysisCompleted = db.prepare(`
+  UPDATE leads SET analysis_completed = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`);
+
+export const convertLeadToUser = db.prepare(`
+  UPDATE leads SET converted_user_id = ?, status = 'converted', updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`);
+
+export const findAllLeads = db.prepare<[], Lead>(`
+  SELECT * FROM leads ORDER BY created_at DESC
 `);

@@ -149,6 +149,24 @@ class ApiClient {
   async getMonthlyHistory() {
     return this.request<{ monthlyHistory: any[] }>('/reports/history/monthly');
   }
+
+  // Lead endpoints
+  async captureLead(email: string, businessName?: string, phone?: string, source?: string) {
+    return this.request<{ lead: any; isReturning: boolean }>('/leads', {
+      method: 'POST',
+      body: JSON.stringify({ email, businessName, phone, source }),
+    });
+  }
+
+  async getLead(id: string) {
+    return this.request<{ lead: any }>(`/leads/${id}`);
+  }
+
+  async markLeadAnalysisCompleted(id: string) {
+    return this.request<{ message: string }>(`/leads/${id}/analysis-completed`, {
+      method: 'POST',
+    });
+  }
 }
 
 export const api = new ApiClient();
