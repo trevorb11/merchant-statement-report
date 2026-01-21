@@ -68,6 +68,162 @@ const getScoreBg = (score: number) =>
     ? 'bg-amber-500/20'
     : 'bg-red-500/20';
 
+const formatCompactCurrency = (n: number) => {
+  if (n >= 1000000) return `$${(n / 1000000).toFixed(1)}M`;
+  if (n >= 1000) return `$${(n / 1000).toFixed(0)}K`;
+  return `$${n.toFixed(0)}`;
+};
+
+// Trend Chart Component
+interface TrendChartProps {
+  data: Array<{ label: string; value: number }>;
+  color?: string;
+  showArea?: boolean;
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+function TrendChart({
+  data,
+  color = '#10b981',
+  showArea = true,
+  height = 200,
+  formatValue = formatCompactCurrency
+}: TrendChartProps) {
+  if (data.length === 0) return null;
+
+  const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+  const width = 100; // percentage-based
+  const chartHeight = height - padding.top - padding.bottom;
+
+  const values = data.map(d => d.value);
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const valueRange = maxValue - minValue || 1;
+
+  // Calculate points
+  const points = data.map((d, i) => {
+    const x = padding.left + (i / (data.length - 1 || 1)) * (100 - padding.left - padding.right);
+    const y = padding.top + chartHeight - ((d.value - minValue) / valueRange) * chartHeight;
+    return { x, y, ...d };
+  });
+
+  // Create SVG path
+  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const areaPath = `${linePath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`;
+
+  // Y-axis labels
+  const yLabels = [maxValue, (maxValue + minValue) / 2, minValue];
+
+  return (
+    <div className="w-full" style={{ height }}>
+      <svg viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" className="w-full h-full">
+        {/* Grid lines */}
+        {[0, 0.5, 1].map((ratio, i) => (
+          <line
+            key={i}
+            x1={padding.left}
+            y1={padding.top + chartHeight * ratio}
+            x2={100 - padding.right}
+            y2={padding.top + chartHeight * ratio}
+            stroke="rgba(255,255,255,0.05)"
+            strokeWidth="0.5"
+          />
+        ))}
+
+        {/* Area fill */}
+        {showArea && (
+          <path
+            d={areaPath}
+            fill={`${color}20`}
+          />
+        )}
+
+        {/* Line */}
+        <path
+          d={linePath}
+          fill="none"
+          stroke={color}
+          strokeWidth="2"
+          vectorEffect="non-scaling-stroke"
+        />
+
+        {/* Data points */}
+        {points.map((p, i) => (
+          <g key={i}>
+            <circle
+              cx={p.x}
+              cy={p.y}
+              r="3"
+              fill={color}
+              vectorEffect="non-scaling-stroke"
+            />
+            {/* X-axis labels */}
+            <text
+              x={p.x}
+              y={height - 10}
+              textAnchor="middle"
+              className="fill-slate-500"
+              style={{ fontSize: '8px' }}
+            >
+              {p.label}
+            </text>
+          </g>
+        ))}
+
+        {/* Y-axis labels */}
+        {yLabels.map((val, i) => (
+          <text
+            key={i}
+            x={padding.left - 5}
+            y={padding.top + (i * chartHeight / 2) + 3}
+            textAnchor="end"
+            className="fill-slate-500"
+            style={{ fontSize: '7px' }}
+          >
+            {formatValue(val)}
+          </text>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+// Comparison Bar Chart
+interface ComparisonBarProps {
+  deposits: number;
+  withdrawals: number;
+}
+
+function ComparisonBar({ deposits, withdrawals }: ComparisonBarProps) {
+  const total = deposits + withdrawals;
+  const depositPct = (deposits / total) * 100;
+  const withdrawalPct = (withdrawals / total) * 100;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-sm">
+        <span className="text-emerald-400">Deposits: {formatCurrency(deposits)}</span>
+        <span className="text-red-400">Withdrawals: {formatCurrency(withdrawals)}</span>
+      </div>
+      <div className="h-4 rounded-full overflow-hidden flex bg-slate-800">
+        <div
+          className="bg-emerald-500 h-full transition-all duration-500"
+          style={{ width: `${depositPct}%` }}
+        />
+        <div
+          className="bg-red-500 h-full transition-all duration-500"
+          style={{ width: `${withdrawalPct}%` }}
+        />
+      </div>
+      <div className="flex justify-between text-xs text-slate-500">
+        <span>{depositPct.toFixed(0)}%</span>
+        <span>{withdrawalPct.toFixed(0)}%</span>
+      </div>
+    </div>
+  );
+}
+
 // Navigation Component
 function Nav() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -927,6 +1083,45 @@ function ReportView({ data }: { data: FinancialData }) {
                 {formatCurrency(data.cashFlowHealth.totalOverdraftFees)}
               </p>
             </div>
+          </div>
+
+          {/* Trend Charts */}
+          {data.monthlyData.length > 1 && (
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-emerald-400" /> Deposits Trend
+                </h3>
+                <TrendChart
+                  data={data.monthlyData.map(m => ({
+                    label: m.monthName.split(' ')[0].slice(0, 3),
+                    value: m.totalDeposits
+                  }))}
+                  color="#10b981"
+                />
+              </div>
+              <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
+                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                  <BarChart3 className="w-5 h-5 text-cyan-400" /> Ending Balance Trend
+                </h3>
+                <TrendChart
+                  data={data.monthlyData.map(m => ({
+                    label: m.monthName.split(' ')[0].slice(0, 3),
+                    value: m.endingBalance
+                  }))}
+                  color="#06b6d4"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Cash Flow Comparison */}
+          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
+            <h3 className="font-semibold mb-4">Total Cash Flow</h3>
+            <ComparisonBar
+              deposits={data.monthlyData.reduce((sum, m) => sum + m.totalDeposits, 0)}
+              withdrawals={data.monthlyData.reduce((sum, m) => sum + m.totalWithdrawals, 0)}
+            />
           </div>
 
           <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
