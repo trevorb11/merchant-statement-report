@@ -36,7 +36,13 @@ import {
   Download,
   Camera,
   Smartphone,
+  Sun,
+  Moon,
+  TrendingDown,
+  Zap,
+  Award,
 } from 'lucide-react';
+import { useTheme } from './hooks/useTheme';
 
 // Lead info stored in session
 interface LeadInfo {
@@ -1282,17 +1288,44 @@ function UploadPage() {
   );
 }
 
+// Theme Toggle Button
+function ThemeToggle() {
+  const { toggleTheme, isDark } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      className={`p-2 rounded-lg transition-colors ${
+        isDark 
+          ? 'bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white' 
+          : 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900'
+      }`}
+      aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
+    >
+      {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+    </button>
+  );
+}
+
 // Report Component (reusable for both preview and saved reports)
 function ReportView({ data }: { data: FinancialData }) {
   const [activeTab, setActiveTab] = useState('overview');
+  const { isDark } = useTheme();
+
+  const cardClass = isDark 
+    ? 'bg-slate-900/50 border-white/5' 
+    : 'bg-white border-slate-200 shadow-sm';
+  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
+  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
+  const textSecondary = isDark ? 'text-slate-300' : 'text-slate-600';
+  const cardInner = isDark ? 'bg-slate-800/50' : 'bg-slate-50';
 
   return (
     <div className="space-y-8">
-      {/* Header */}
+      {/* Header with Theme Toggle */}
       <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">{data.businessName}</h1>
-          <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+          <h1 className={`text-3xl font-bold mb-2 ${textPrimary}`}>{data.businessName}</h1>
+          <div className={`flex flex-wrap gap-4 text-sm ${textMuted}`}>
             <span className="flex items-center gap-1">
               <Building2 className="w-4 h-4" /> {data.bankName}
             </span>
@@ -1304,12 +1337,81 @@ function ReportView({ data }: { data: FinancialData }) {
             </span>
           </div>
         </div>
-        <button
-          onClick={() => generatePDF(data)}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium transition-colors"
-        >
-          <Download className="w-4 h-4" /> Download PDF
-        </button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          <button
+            onClick={() => generatePDF(data)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              isDark 
+                ? 'bg-white/5 hover:bg-white/10 border border-white/10' 
+                : 'bg-slate-100 hover:bg-slate-200 border border-slate-200'
+            }`}
+          >
+            <Download className="w-4 h-4" /> Download PDF
+          </button>
+        </div>
+      </div>
+
+      {/* Quick Snapshot - Key Metrics at a Glance */}
+      <div className={`p-6 rounded-xl border ${cardClass}`}>
+        <div className="flex items-center gap-2 mb-4">
+          <Zap className="w-5 h-5 text-emerald-500" />
+          <h2 className={`text-lg font-semibold ${textPrimary}`}>Your Business at a Glance</h2>
+        </div>
+        <div className="grid md:grid-cols-4 gap-6">
+          <div className="text-center">
+            <div className={`w-20 h-20 mx-auto rounded-full ${getScoreBg(data.fundabilityAssessment.score)} flex items-center justify-center mb-3`}>
+              <span className={`text-3xl font-bold ${getScoreColor(data.fundabilityAssessment.score)}`}>
+                {data.fundabilityAssessment.score}
+              </span>
+            </div>
+            <p className={`text-sm font-medium ${textPrimary}`}>Funding Score</p>
+            <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs ${getScoreBg(data.fundabilityAssessment.score)} ${getScoreColor(data.fundabilityAssessment.score)}`}>
+              {data.fundabilityAssessment.rating}
+            </span>
+          </div>
+          
+          <div className="text-center">
+            <div className="mb-3">
+              <span className={`text-3xl font-bold ${textPrimary}`}>
+                {formatCurrency(data.revenueAnalysis.estimatedMonthlyRevenue)}
+              </span>
+            </div>
+            <p className={`text-sm font-medium ${textPrimary}`}>Avg. Monthly Revenue</p>
+            <div className="flex items-center justify-center gap-1 mt-1">
+              {data.revenueAnalysis.revenueGrowthPercent >= 0 ? (
+                <TrendingUp className="w-4 h-4 text-emerald-500" />
+              ) : (
+                <TrendingDown className="w-4 h-4 text-red-500" />
+              )}
+              <span className={data.revenueAnalysis.revenueGrowthPercent >= 0 ? 'text-emerald-500 text-sm' : 'text-red-500 text-sm'}>
+                {data.revenueAnalysis.revenueGrowthPercent}%
+              </span>
+            </div>
+          </div>
+
+          <div className="text-center">
+            <div className="mb-3">
+              <span className="text-3xl font-bold text-emerald-500">
+                {formatCurrency(data.fundabilityAssessment.estimatedFundingCapacity)}
+              </span>
+            </div>
+            <p className={`text-sm font-medium ${textPrimary}`}>Funding Capacity</p>
+            <p className={`text-xs mt-1 ${textMuted}`}>What you may qualify for</p>
+          </div>
+
+          <div className="text-center">
+            <div className={`w-20 h-20 mx-auto rounded-full ${getScoreBg(data.cashFlowHealth.score)} flex items-center justify-center mb-3`}>
+              <span className={`text-3xl font-bold ${getScoreColor(data.cashFlowHealth.score)}`}>
+                {data.cashFlowHealth.score}
+              </span>
+            </div>
+            <p className={`text-sm font-medium ${textPrimary}`}>Cash Flow Health</p>
+            <span className={`inline-block mt-1 px-2 py-0.5 rounded text-xs ${getScoreBg(data.cashFlowHealth.score)} ${getScoreColor(data.cashFlowHealth.score)}`}>
+              {data.cashFlowHealth.rating}
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Score Cards */}
@@ -1381,83 +1483,109 @@ function ReportView({ data }: { data: FinancialData }) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-2">
-        {['overview', 'cashflow', 'expenses', 'insights', 'fundability'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-              activeTab === tab ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </button>
-        ))}
+      <div className={`flex gap-2 overflow-x-auto pb-2 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+        {[
+          { id: 'overview', label: 'Summary', icon: Info },
+          { id: 'cashflow', label: 'Cash Flow', icon: Activity },
+          { id: 'expenses', label: 'Expenses', icon: PieChart },
+          { id: 'insights', label: 'Insights', icon: Lightbulb },
+          { id: 'fundability', label: 'Funding Options', icon: DollarSign }
+        ].map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-4 py-3 rounded-t-lg text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-2 ${
+                activeTab === tab.id 
+                  ? isDark 
+                    ? 'bg-white/10 text-white border-b-2 border-emerald-500' 
+                    : 'bg-slate-100 text-slate-900 border-b-2 border-emerald-500'
+                  : isDark 
+                    ? 'text-slate-400 hover:text-white hover:bg-white/5' 
+                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Tab Content */}
       {activeTab === 'overview' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Info className="w-5 h-5 text-emerald-400" /> Executive Summary
-            </h3>
-            <p className="text-slate-300 leading-relaxed">{data.summary}</p>
+          {/* What This Means for You */}
+          <div className={`p-6 rounded-xl border ${cardClass}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <Award className="w-5 h-5 text-emerald-500" />
+              <h3 className={`font-semibold ${textPrimary}`}>What This Means for Your Business</h3>
+            </div>
+            <p className={`${textSecondary} leading-relaxed text-lg`}>{data.summary}</p>
           </div>
 
+          {/* Strengths & Areas to Watch - Side by Side */}
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Strengths
-              </h3>
+            <div className={`p-6 rounded-xl border ${cardClass}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                <h3 className={`font-semibold ${textPrimary}`}>Your Strengths</h3>
+              </div>
+              <p className={`text-sm ${textMuted} mb-4`}>These factors work in your favor when seeking funding</p>
               <ul className="space-y-3">
                 {data.fundabilityAssessment.strengths.map((s, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-300">{s}</span>
+                  <li key={i} className={`flex items-start gap-3 p-3 rounded-lg ${cardInner}`}>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <span className={textSecondary}>{s}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-amber-400" /> Concerns
-              </h3>
+            <div className={`p-6 rounded-xl border ${cardClass}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <AlertCircle className="w-5 h-5 text-amber-500" />
+                <h3 className={`font-semibold ${textPrimary}`}>Areas to Watch</h3>
+              </div>
+              <p className={`text-sm ${textMuted} mb-4`}>Addressing these can improve your funding options</p>
               <ul className="space-y-3">
                 {data.fundabilityAssessment.concerns.map((c, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-300">{c}</span>
+                  <li key={i} className={`flex items-start gap-3 p-3 rounded-lg ${cardInner}`}>
+                    <AlertCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <span className={textSecondary}>{c}</span>
                   </li>
                 ))}
               </ul>
             </div>
           </div>
 
+          {/* Red Flags - Important Alerts */}
           {data.redFlags.length > 0 && (
-            <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-              <h3 className="font-semibold mb-4 flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-amber-400" /> Red Flags
-              </h3>
+            <div className={`p-6 rounded-xl border-2 ${isDark ? 'bg-red-950/20 border-red-500/30' : 'bg-red-50 border-red-200'}`}>
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-5 h-5 text-red-500" />
+                <h3 className={`font-semibold ${textPrimary}`}>Important: Items Needing Attention</h3>
+              </div>
+              <p className={`text-sm ${textMuted} mb-4`}>These issues may affect your funding eligibility</p>
               <div className="space-y-3">
                 {data.redFlags.map((flag, i) => (
-                  <div key={i} className="p-4 rounded-lg bg-slate-800/50">
-                    <div className="flex items-center gap-2 mb-1">
+                  <div key={i} className={`p-4 rounded-lg ${isDark ? 'bg-slate-800/50' : 'bg-white'} border ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
+                    <div className="flex items-center gap-2 mb-2">
                       <span
-                        className={`px-2 py-0.5 rounded text-xs ${
+                        className={`px-2 py-1 rounded text-xs font-medium ${
                           flag.severity === 'high'
-                            ? 'bg-red-500/20 text-red-400'
+                            ? 'bg-red-500/20 text-red-500'
                             : flag.severity === 'medium'
-                            ? 'bg-amber-500/20 text-amber-400'
-                            : 'bg-slate-500/20 text-slate-400'
+                            ? 'bg-amber-500/20 text-amber-600'
+                            : 'bg-slate-500/20 text-slate-500'
                         }`}
                       >
-                        {flag.severity}
+                        {flag.severity === 'high' ? 'High Priority' : flag.severity === 'medium' ? 'Medium Priority' : 'Low Priority'}
                       </span>
-                      <span className="font-medium">{flag.type}</span>
+                      <span className={`font-medium ${textPrimary}`}>{flag.type}</span>
                     </div>
-                    <p className="text-sm text-slate-400">{flag.description}</p>
+                    <p className={`text-sm ${textMuted}`}>{flag.description}</p>
                   </div>
                 ))}
               </div>
@@ -1468,31 +1596,35 @@ function ReportView({ data }: { data: FinancialData }) {
 
       {activeTab === 'cashflow' && (
         <div className="space-y-6">
+          {/* Cash Flow Summary Cards */}
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-              <p className="text-sm text-slate-400 mb-1">Cash Flow Timing</p>
-              <p className="text-2xl font-bold capitalize">{data.cashFlowHealth.cashFlowTiming}</p>
+            <div className={`p-6 rounded-xl border ${cardClass}`}>
+              <p className={`text-sm ${textMuted} mb-1`}>Cash Flow Timing</p>
+              <p className={`text-2xl font-bold capitalize ${textPrimary}`}>{data.cashFlowHealth.cashFlowTiming}</p>
+              <p className={`text-xs ${textMuted} mt-2`}>When money comes in vs. goes out</p>
             </div>
-            <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-              <p className="text-sm text-slate-400 mb-1">Overdraft Frequency</p>
-              <p className="text-2xl font-bold capitalize">
+            <div className={`p-6 rounded-xl border ${cardClass}`}>
+              <p className={`text-sm ${textMuted} mb-1`}>Overdraft Frequency</p>
+              <p className={`text-2xl font-bold capitalize ${textPrimary}`}>
                 {data.cashFlowHealth.overdraftFrequency}
               </p>
+              <p className={`text-xs ${textMuted} mt-2`}>How often balance goes negative</p>
             </div>
-            <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-              <p className="text-sm text-slate-400 mb-1">Total Overdraft Fees</p>
-              <p className="text-2xl font-bold text-red-400">
+            <div className={`p-6 rounded-xl border ${cardClass}`}>
+              <p className={`text-sm ${textMuted} mb-1`}>Total Overdraft Fees</p>
+              <p className="text-2xl font-bold text-red-500">
                 {formatCurrency(data.cashFlowHealth.totalOverdraftFees)}
               </p>
+              <p className={`text-xs ${textMuted} mt-2`}>Fees you could avoid</p>
             </div>
           </div>
 
           {/* Trend Charts */}
           {data.monthlyData.length > 1 && (
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-emerald-400" /> Deposits Trend
+              <div className={`p-6 rounded-xl border ${cardClass}`}>
+                <h3 className={`font-semibold mb-4 flex items-center gap-2 ${textPrimary}`}>
+                  <TrendingUp className="w-5 h-5 text-emerald-500" /> Money Coming In
                 </h3>
                 <TrendChart
                   data={data.monthlyData.map(m => ({
@@ -1502,9 +1634,9 @@ function ReportView({ data }: { data: FinancialData }) {
                   color="#10b981"
                 />
               </div>
-              <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5 text-cyan-400" /> Ending Balance Trend
+              <div className={`p-6 rounded-xl border ${cardClass}`}>
+                <h3 className={`font-semibold mb-4 flex items-center gap-2 ${textPrimary}`}>
+                  <BarChart3 className="w-5 h-5 text-cyan-500" /> Account Balance Over Time
                 </h3>
                 <TrendChart
                   data={data.monthlyData.map(m => ({
@@ -1518,20 +1650,23 @@ function ReportView({ data }: { data: FinancialData }) {
           )}
 
           {/* Cash Flow Comparison */}
-          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-            <h3 className="font-semibold mb-4">Total Cash Flow</h3>
+          <div className={`p-6 rounded-xl border ${cardClass}`}>
+            <h3 className={`font-semibold mb-2 ${textPrimary}`}>Money In vs. Money Out</h3>
+            <p className={`text-sm ${textMuted} mb-4`}>Total deposits compared to total withdrawals</p>
             <ComparisonBar
               deposits={data.monthlyData.reduce((sum, m) => sum + m.totalDeposits, 0)}
               withdrawals={data.monthlyData.reduce((sum, m) => sum + m.totalWithdrawals, 0)}
             />
           </div>
 
-          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-            <h3 className="font-semibold mb-4">Monthly Breakdown</h3>
+          {/* Monthly Breakdown Table */}
+          <div className={`p-6 rounded-xl border ${cardClass}`}>
+            <h3 className={`font-semibold mb-2 ${textPrimary}`}>Month-by-Month Details</h3>
+            <p className={`text-sm ${textMuted} mb-4`}>See how your cash flow changed each month</p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-slate-400 border-b border-white/5">
+                  <tr className={`${textMuted} border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
                     <th className="text-left pb-3">Month</th>
                     <th className="text-right pb-3">Deposits</th>
                     <th className="text-right pb-3">Withdrawals</th>
@@ -1541,24 +1676,18 @@ function ReportView({ data }: { data: FinancialData }) {
                 </thead>
                 <tbody>
                   {data.monthlyData.map((m, i) => (
-                    <tr key={i} className="border-b border-white/5">
-                      <td className="py-3">{m.monthName}</td>
-                      <td className="py-3 text-right text-emerald-400">
+                    <tr key={i} className={`border-b ${isDark ? 'border-white/10' : 'border-slate-100'}`}>
+                      <td className={`py-3 ${textPrimary}`}>{m.monthName}</td>
+                      <td className="py-3 text-right text-emerald-500 font-medium">
                         {formatCurrency(m.totalDeposits)}
                       </td>
-                      <td className="py-3 text-right text-red-400">
+                      <td className="py-3 text-right text-red-500 font-medium">
                         {formatCurrency(m.totalWithdrawals)}
                       </td>
-                      <td
-                        className={`py-3 text-right ${m.endingBalance < 0 ? 'text-red-400' : ''}`}
-                      >
+                      <td className={`py-3 text-right font-medium ${m.endingBalance < 0 ? 'text-red-500' : textPrimary}`}>
                         {formatCurrency(m.endingBalance)}
                       </td>
-                      <td
-                        className={`py-3 text-right ${
-                          m.negativeDays > 0 ? 'text-red-400' : 'text-slate-400'
-                        }`}
-                      >
+                      <td className={`py-3 text-right ${m.negativeDays > 0 ? 'text-red-500 font-medium' : textMuted}`}>
                         {m.negativeDays}
                       </td>
                     </tr>
@@ -1571,11 +1700,32 @@ function ReportView({ data }: { data: FinancialData }) {
       )}
 
       {activeTab === 'expenses' && (
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <PieChart className="w-5 h-5 text-cyan-400" /> Expense Categories
-            </h3>
+        <div className="space-y-6">
+          {/* Expense Overview */}
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className={`p-6 rounded-xl border ${cardClass}`}>
+              <p className={`text-sm ${textMuted} mb-1`}>Total Monthly Expenses</p>
+              <p className={`text-3xl font-bold ${textPrimary}`}>
+                {formatCurrency(data.expenseAnalysis.totalMonthlyExpenses)}
+              </p>
+              <p className={`text-xs ${textMuted} mt-2`}>Average across all months analyzed</p>
+            </div>
+            <div className={`p-6 rounded-xl border ${cardClass}`}>
+              <p className={`text-sm ${textMuted} mb-1`}>Biggest Expense Category</p>
+              <p className={`text-2xl font-bold capitalize ${textPrimary}`}>
+                {data.expenseAnalysis.largestExpenseCategory.replace(/([A-Z])/g, ' $1')}
+              </p>
+              <p className={`text-xs ${textMuted} mt-2`}>Where most of your money goes</p>
+            </div>
+          </div>
+
+          {/* Expense Breakdown */}
+          <div className={`p-6 rounded-xl border ${cardClass}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <PieChart className="w-5 h-5 text-cyan-500" />
+              <h3 className={`font-semibold ${textPrimary}`}>Where Your Money Goes</h3>
+            </div>
+            <p className={`text-sm ${textMuted} mb-6`}>Breakdown of your business expenses by category</p>
             <div className="space-y-4">
               {Object.entries(data.expenseAnalysis.categories)
                 .filter(([_, v]) => v > 0)
@@ -1592,17 +1742,17 @@ function ReportView({ data }: { data: FinancialData }) {
                   ];
                   return (
                     <div key={cat}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-slate-400 capitalize">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className={`${textSecondary} capitalize font-medium`}>
                           {cat.replace(/([A-Z])/g, ' $1')}
                         </span>
-                        <span>
-                          {formatCurrency(amount)} ({pct.toFixed(0)}%)
+                        <span className={`${textPrimary} font-semibold`}>
+                          {formatCurrency(amount)} <span className={textMuted}>({pct.toFixed(0)}%)</span>
                         </span>
                       </div>
-                      <div className="h-2 bg-slate-800 rounded-full">
+                      <div className={`h-3 rounded-full ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
                         <div
-                          className={`h-2 rounded-full ${colors[i % colors.length]}`}
+                          className={`h-3 rounded-full ${colors[i % colors.length]} transition-all`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
@@ -1611,97 +1761,88 @@ function ReportView({ data }: { data: FinancialData }) {
                 })}
             </div>
           </div>
-
-          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-            <h3 className="font-semibold mb-4">Summary</h3>
-            <div className="space-y-4">
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Total Monthly Expenses</p>
-                <p className="text-2xl font-bold">
-                  {formatCurrency(data.expenseAnalysis.totalMonthlyExpenses)}
-                </p>
-              </div>
-              <div className="p-4 rounded-lg bg-slate-800/50">
-                <p className="text-sm text-slate-400">Largest Category</p>
-                <p className="text-xl font-bold capitalize">
-                  {data.expenseAnalysis.largestExpenseCategory.replace(/([A-Z])/g, ' $1')}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
       {activeTab === 'insights' && (
-        <div className="space-y-4">
-          {data.insights.map((insight, i) => (
-            <div
-              key={i}
-              className={`p-6 rounded-xl bg-slate-900/50 border border-white/5 border-l-4 ${
-                insight.priority === 'high'
-                  ? 'border-l-red-500'
-                  : insight.priority === 'medium'
-                  ? 'border-l-amber-500'
-                  : 'border-l-slate-500'
-              }`}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="px-2 py-0.5 rounded text-xs bg-slate-700 text-slate-300">
-                  {insight.category}
-                </span>
-                {insight.actionable && (
-                  <span className="px-2 py-0.5 rounded text-xs bg-emerald-500/20 text-emerald-400">
-                    Actionable
-                  </span>
-                )}
-              </div>
-              <h4 className="font-semibold mb-2">{insight.title}</h4>
-              <p className="text-slate-400">{insight.description}</p>
+        <div className="space-y-6">
+          <div className={`p-4 rounded-lg ${isDark ? 'bg-cyan-950/30 border-cyan-500/20' : 'bg-cyan-50 border-cyan-200'} border`}>
+            <div className="flex items-center gap-2">
+              <Lightbulb className="w-5 h-5 text-cyan-500" />
+              <p className={`${textSecondary}`}>These insights are based on patterns found in your bank statements. Focus on the high-priority items first.</p>
             </div>
-          ))}
+          </div>
+          
+          <div className="space-y-4">
+            {data.insights.map((insight, i) => (
+              <div
+                key={i}
+                className={`p-6 rounded-xl border border-l-4 ${cardClass} ${
+                  insight.priority === 'high'
+                    ? 'border-l-red-500'
+                    : insight.priority === 'medium'
+                    ? 'border-l-amber-500'
+                    : 'border-l-slate-400'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${
+                    insight.priority === 'high' 
+                      ? 'bg-red-500/20 text-red-500' 
+                      : insight.priority === 'medium'
+                      ? 'bg-amber-500/20 text-amber-600'
+                      : isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'
+                  }`}>
+                    {insight.priority === 'high' ? 'High Priority' : insight.priority === 'medium' ? 'Medium Priority' : 'Low Priority'}
+                  </span>
+                  <span className={`px-2 py-1 rounded text-xs ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
+                    {insight.category}
+                  </span>
+                  {insight.actionable && (
+                    <span className="px-2 py-1 rounded text-xs bg-emerald-500/20 text-emerald-500 font-medium">
+                      You Can Fix This
+                    </span>
+                  )}
+                </div>
+                <h4 className={`font-semibold mb-2 text-lg ${textPrimary}`}>{insight.title}</h4>
+                <p className={textSecondary}>{insight.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {activeTab === 'fundability' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
+          {/* Funding Score Overview */}
+          <div className={`p-6 rounded-xl border ${cardClass}`}>
             <div className="flex flex-col md:flex-row items-center gap-8">
               <div
-                className={`w-36 h-36 rounded-full ${getScoreBg(
-                  data.fundabilityAssessment.score
-                )} flex items-center justify-center`}
+                className={`w-36 h-36 rounded-full ${getScoreBg(data.fundabilityAssessment.score)} flex items-center justify-center`}
               >
                 <div className="text-center">
-                  <span
-                    className={`text-5xl font-bold ${getScoreColor(
-                      data.fundabilityAssessment.score
-                    )}`}
-                  >
+                  <span className={`text-5xl font-bold ${getScoreColor(data.fundabilityAssessment.score)}`}>
                     {data.fundabilityAssessment.score}
                   </span>
-                  <p className="text-slate-400 text-sm">/100</p>
+                  <p className={`${textMuted} text-sm`}>/100</p>
                 </div>
               </div>
-              <div className="flex-1">
-                <span
-                  className={`inline-block px-3 py-1 rounded-lg text-sm ${getScoreBg(
-                    data.fundabilityAssessment.score
-                  )} ${getScoreColor(data.fundabilityAssessment.score)} mb-3`}
-                >
+              <div className="flex-1 text-center md:text-left">
+                <span className={`inline-block px-3 py-1 rounded-lg text-sm font-medium ${getScoreBg(data.fundabilityAssessment.score)} ${getScoreColor(data.fundabilityAssessment.score)} mb-3`}>
                   {data.fundabilityAssessment.rating}
                 </span>
-                <p className="text-slate-300 mb-4">
+                <p className={`${textSecondary} mb-4 text-lg`}>
                   {data.fundabilityAssessment.score >= 80
-                    ? 'Excellent financial health. You qualify for the best rates.'
+                    ? 'Great news! Your business shows excellent financial health. You likely qualify for the best rates and terms.'
                     : data.fundabilityAssessment.score >= 60
-                    ? 'Good standing with solid fundamentals.'
+                    ? 'Your business is in good standing with solid fundamentals. You have good funding options available.'
                     : data.fundabilityAssessment.score >= 40
-                    ? 'Potential shown but some areas need attention.'
-                    : 'Signs of financial stress. Focus on improvements.'}
+                    ? 'Your business shows potential, but there are some areas that could use attention before seeking funding.'
+                    : 'Your business may be experiencing some financial stress. Focus on the improvement roadmap below.'}
                 </p>
-                <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                  <p className="text-sm text-slate-400">Estimated Funding Capacity</p>
-                  <p className="text-2xl font-bold text-emerald-400">
+                <div className={`p-4 rounded-lg ${isDark ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200'} border`}>
+                  <p className={`text-sm ${textMuted}`}>How Much You May Qualify For</p>
+                  <p className="text-3xl font-bold text-emerald-500">
                     {formatCurrency(data.fundabilityAssessment.estimatedFundingCapacity)}
                   </p>
                 </div>
@@ -1709,32 +1850,40 @@ function ReportView({ data }: { data: FinancialData }) {
             </div>
           </div>
 
-          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-            <h3 className="font-semibold mb-4">Recommended Products</h3>
+          {/* Funding Options */}
+          <div className={`p-6 rounded-xl border ${cardClass}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <DollarSign className="w-5 h-5 text-emerald-500" />
+              <h3 className={`font-semibold ${textPrimary}`}>Funding Options for Your Business</h3>
+            </div>
+            <p className={`text-sm ${textMuted} mb-4`}>Based on your financial profile, these products are a good fit</p>
             <div className="flex flex-wrap gap-3">
               {data.fundabilityAssessment.recommendedProducts.map((p, i) => (
                 <div
                   key={i}
-                  className="px-4 py-2 rounded-lg bg-slate-800/50 border border-white/5 flex items-center gap-2"
+                  className={`px-4 py-3 rounded-lg border flex items-center gap-2 ${cardInner} ${isDark ? 'border-white/10' : 'border-slate-200'}`}
                 >
-                  <DollarSign className="w-4 h-4 text-emerald-400" />
-                  <span>{p}</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <span className={textPrimary}>{p}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <ChevronRight className="w-5 h-5 text-cyan-400" /> Improvement Roadmap
-            </h3>
+          {/* Improvement Roadmap */}
+          <div className={`p-6 rounded-xl border ${cardClass}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="w-5 h-5 text-cyan-500" />
+              <h3 className={`font-semibold ${textPrimary}`}>How to Improve Your Score</h3>
+            </div>
+            <p className={`text-sm ${textMuted} mb-4`}>Follow these steps to increase your funding options</p>
             <div className="space-y-3">
               {data.fundabilityAssessment.recommendations.map((rec, i) => (
-                <div key={i} className="flex items-start gap-4 p-4 rounded-lg bg-slate-800/50">
-                  <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold flex-shrink-0">
+                <div key={i} className={`flex items-start gap-4 p-4 rounded-lg ${cardInner}`}>
+                  <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center text-cyan-500 font-bold flex-shrink-0">
                     {i + 1}
                   </div>
-                  <p className="text-slate-300 pt-1">{rec}</p>
+                  <p className={`${textSecondary} pt-1`}>{rec}</p>
                 </div>
               ))}
             </div>
@@ -1746,15 +1895,16 @@ function ReportView({ data }: { data: FinancialData }) {
             monthlyRevenue={data.revenueAnalysis.estimatedMonthlyRevenue}
           />
 
-          <div className="p-6 rounded-xl bg-gradient-to-r from-emerald-900/50 to-cyan-900/50 border border-emerald-500/20">
+          {/* CTA */}
+          <div className={`p-6 rounded-xl ${isDark ? 'bg-gradient-to-r from-emerald-900/50 to-cyan-900/50 border-emerald-500/20' : 'bg-gradient-to-r from-emerald-50 to-cyan-50 border-emerald-200'} border`}>
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold mb-1">Ready to Get Funded?</h3>
-                <p className="text-slate-300">
+                <h3 className={`text-xl font-bold mb-1 ${textPrimary}`}>Ready to Get Funded?</h3>
+                <p className={textSecondary}>
                   Our team can help find the best options for your business.
                 </p>
               </div>
-              <button className="bg-emerald-600 hover:bg-emerald-500 px-6 py-3 rounded-lg font-medium flex items-center gap-2 whitespace-nowrap">
+              <button className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 whitespace-nowrap transition-colors">
                 Contact Today Capital Group <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -1782,23 +1932,25 @@ function ReportPage() {
     }
   }, [navigate]);
 
+  const { isDark } = useTheme();
+
   if (isLoading || !data) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+    <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+      <div className={`fixed inset-0 ${isDark ? 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950' : 'bg-gradient-to-br from-slate-50 via-white to-slate-100'}`} />
       <Nav />
 
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-8">
         {!isAuthenticated && (
-          <div className="mb-6 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-            <p className="text-emerald-400">
+          <div className={`mb-6 p-4 rounded-lg ${isDark ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200'} border`}>
+            <p className={isDark ? 'text-emerald-400' : 'text-emerald-700'}>
               <button
                 onClick={() => navigate('/register')}
                 className="font-semibold hover:underline"
@@ -1822,6 +1974,7 @@ function SavedReportPage({ reportId }: { reportId: string }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   useEffect(() => {
     const loadReport = async () => {
@@ -1839,23 +1992,23 @@ function SavedReportPage({ reportId }: { reportId: string }) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+        <Loader2 className="w-8 h-8 animate-spin text-emerald-500" />
       </div>
     );
   }
 
   if (error || !report) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white">
+      <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
         <Nav />
         <main className="max-w-6xl mx-auto px-6 py-8">
-          <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+          <div className={`p-4 rounded-lg ${isDark ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-red-50 border-red-200 text-red-600'} border`}>
             {error || 'Report not found'}
           </div>
           <button
             onClick={() => navigate('/dashboard')}
-            className="mt-4 text-emerald-400 hover:underline"
+            className="mt-4 text-emerald-500 hover:underline"
           >
             Back to Dashboard
           </button>
@@ -1865,8 +2018,8 @@ function SavedReportPage({ reportId }: { reportId: string }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+    <div className={`min-h-screen ${isDark ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+      <div className={`fixed inset-0 ${isDark ? 'bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950' : 'bg-gradient-to-br from-slate-50 via-white to-slate-100'}`} />
       <Nav />
 
       <main className="relative z-10 max-w-6xl mx-auto px-6 py-8">
