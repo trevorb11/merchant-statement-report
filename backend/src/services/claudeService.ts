@@ -184,11 +184,17 @@ Return this exact JSON structure:
 Be thorough and accurate. If data is unclear or missing, make reasonable estimates based on available information and note any assumptions. Focus on providing actionable insights that help both the business owner understand their finances and Today Capital Group assess funding eligibility.`,
   });
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 8000,
-    messages: [{ role: 'user', content }],
-  });
+  let response;
+  try {
+    response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 8000,
+      messages: [{ role: 'user', content }],
+    });
+  } catch (apiError: any) {
+    console.error('Anthropic API error:', apiError?.message || apiError);
+    throw new Error(`AI service error: ${apiError?.message || 'Failed to connect to AI service'}`);
+  }
 
   // Extract text response
   const textContent = response.content.find((c) => c.type === 'text');

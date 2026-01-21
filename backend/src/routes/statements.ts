@@ -283,7 +283,9 @@ router.post(
       }
 
       console.error('Quick analysis error:', error);
-      res.status(500).json({ error: 'Failed to analyze statements' });
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Error details:', errorMessage);
+      res.status(500).json({ error: 'Failed to analyze statements', details: errorMessage });
     }
   }
 );
