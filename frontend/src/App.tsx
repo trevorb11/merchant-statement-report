@@ -33,6 +33,8 @@ import {
   Eye,
   Mail,
   Sparkles,
+  Download,
+  Printer,
 } from 'lucide-react';
 
 // Lead info stored in session
@@ -187,6 +189,157 @@ function TrendChart({
       </svg>
     </div>
   );
+}
+
+// PDF Export Function
+function generatePDF(data: FinancialData) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Please allow popups to download the PDF');
+    return;
+  }
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>${data.businessName} - Financial Analysis Report</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; line-height: 1.5; padding: 40px; max-width: 800px; margin: 0 auto; }
+        h1 { font-size: 28px; margin-bottom: 8px; color: #0f172a; }
+        h2 { font-size: 20px; margin: 24px 0 16px; color: #0f172a; border-bottom: 2px solid #10b981; padding-bottom: 8px; }
+        h3 { font-size: 16px; margin: 16px 0 8px; color: #334155; }
+        p { margin-bottom: 8px; color: #475569; }
+        .header { border-bottom: 1px solid #e2e8f0; padding-bottom: 16px; margin-bottom: 24px; }
+        .meta { display: flex; gap: 24px; color: #64748b; font-size: 14px; margin-top: 8px; }
+        .scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 24px 0; }
+        .score-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; text-align: center; }
+        .score-card .label { font-size: 12px; color: #64748b; margin-bottom: 4px; }
+        .score-card .value { font-size: 28px; font-weight: bold; }
+        .score-card .value.green { color: #10b981; }
+        .score-card .value.cyan { color: #06b6d4; }
+        .summary { background: #f0fdf4; border-left: 4px solid #10b981; padding: 16px; margin: 24px 0; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .list { padding-left: 24px; }
+        .list li { margin-bottom: 8px; color: #475569; }
+        .list.strengths li::marker { color: #10b981; }
+        .list.concerns li::marker { color: #f59e0b; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background: #f8fafc; font-weight: 600; color: #334155; }
+        td.green { color: #10b981; }
+        td.red { color: #ef4444; }
+        .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; text-align: center; color: #94a3b8; font-size: 12px; }
+        .recommendations { background: #f0f9ff; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        .recommendations ol { padding-left: 24px; }
+        .recommendations li { margin-bottom: 8px; color: #0369a1; }
+        @media print { body { padding: 20px; } .scores { grid-template-columns: repeat(2, 1fr); } }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h1>${data.businessName}</h1>
+        <div class="meta">
+          <span>Bank: ${data.bankName}</span>
+          <span>Account: ****${data.accountNumber}</span>
+          <span>Period: ${data.periodCovered.start} - ${data.periodCovered.end}</span>
+        </div>
+      </div>
+
+      <div class="scores">
+        <div class="score-card">
+          <div class="label">Fundability Score</div>
+          <div class="value green">${data.fundabilityAssessment.score}/100</div>
+          <div class="label">${data.fundabilityAssessment.rating}</div>
+        </div>
+        <div class="score-card">
+          <div class="label">Cash Flow Health</div>
+          <div class="value cyan">${data.cashFlowHealth.score}/100</div>
+          <div class="label">${data.cashFlowHealth.rating}</div>
+        </div>
+        <div class="score-card">
+          <div class="label">Monthly Revenue</div>
+          <div class="value">$${data.revenueAnalysis.estimatedMonthlyRevenue.toLocaleString()}</div>
+          <div class="label">${data.revenueAnalysis.revenueGrowthPercent >= 0 ? '+' : ''}${data.revenueAnalysis.revenueGrowthPercent}% growth</div>
+        </div>
+        <div class="score-card">
+          <div class="label">Funding Capacity</div>
+          <div class="value green">$${data.fundabilityAssessment.estimatedFundingCapacity.toLocaleString()}</div>
+          <div class="label">Based on cash flow</div>
+        </div>
+      </div>
+
+      <h2>Executive Summary</h2>
+      <div class="summary">
+        <p>${data.summary}</p>
+      </div>
+
+      <div class="grid-2">
+        <div>
+          <h3>Strengths</h3>
+          <ul class="list strengths">
+            ${data.fundabilityAssessment.strengths.map(s => `<li>${s}</li>`).join('')}
+          </ul>
+        </div>
+        <div>
+          <h3>Concerns</h3>
+          <ul class="list concerns">
+            ${data.fundabilityAssessment.concerns.map(c => `<li>${c}</li>`).join('')}
+          </ul>
+        </div>
+      </div>
+
+      <h2>Monthly Cash Flow</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Deposits</th>
+            <th>Withdrawals</th>
+            <th>Ending Balance</th>
+            <th>Negative Days</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.monthlyData.map(m => `
+            <tr>
+              <td>${m.monthName}</td>
+              <td class="green">$${m.totalDeposits.toLocaleString()}</td>
+              <td class="red">$${m.totalWithdrawals.toLocaleString()}</td>
+              <td${m.endingBalance < 0 ? ' class="red"' : ''}>$${m.endingBalance.toLocaleString()}</td>
+              <td${m.negativeDays > 0 ? ' class="red"' : ''}>${m.negativeDays}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+
+      <h2>Recommendations</h2>
+      <div class="recommendations">
+        <ol>
+          ${data.fundabilityAssessment.recommendations.map(r => `<li>${r}</li>`).join('')}
+        </ol>
+      </div>
+
+      <h2>Recommended Funding Products</h2>
+      <p>${data.fundabilityAssessment.recommendedProducts.join(' • ')}</p>
+
+      <div class="footer">
+        <p>Generated by Today Capital Group</p>
+        <p>Report Date: ${new Date().toLocaleDateString()}</p>
+      </div>
+
+      <script>
+        window.onload = function() {
+          window.print();
+        }
+      </script>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.write(html);
+  printWindow.document.close();
 }
 
 // Comparison Bar Chart
@@ -895,19 +1048,27 @@ function ReportView({ data }: { data: FinancialData }) {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{data.businessName}</h1>
-        <div className="flex flex-wrap gap-4 text-sm text-slate-400">
-          <span className="flex items-center gap-1">
-            <Building2 className="w-4 h-4" /> {data.bankName}
-          </span>
-          <span className="flex items-center gap-1">
-            <CreditCard className="w-4 h-4" /> ****{data.accountNumber}
-          </span>
-          <span className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" /> {data.periodCovered.start} - {data.periodCovered.end}
-          </span>
+      <div className="mb-8 flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">{data.businessName}</h1>
+          <div className="flex flex-wrap gap-4 text-sm text-slate-400">
+            <span className="flex items-center gap-1">
+              <Building2 className="w-4 h-4" /> {data.bankName}
+            </span>
+            <span className="flex items-center gap-1">
+              <CreditCard className="w-4 h-4" /> ****{data.accountNumber}
+            </span>
+            <span className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" /> {data.periodCovered.start} - {data.periodCovered.end}
+            </span>
+          </div>
         </div>
+        <button
+          onClick={() => generatePDF(data)}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-sm font-medium transition-colors"
+        >
+          <Download className="w-4 h-4" /> Download PDF
+        </button>
       </div>
 
       {/* Score Cards */}
