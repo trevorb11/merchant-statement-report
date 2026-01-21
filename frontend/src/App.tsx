@@ -34,7 +34,6 @@ import {
   Mail,
   Sparkles,
   Download,
-  Printer,
 } from 'lucide-react';
 
 // Lead info stored in session
@@ -95,7 +94,6 @@ function TrendChart({
   if (data.length === 0) return null;
 
   const padding = { top: 20, right: 20, bottom: 40, left: 60 };
-  const width = 100; // percentage-based
   const chartHeight = height - padding.top - padding.bottom;
 
   const values = data.map(d => d.value);
@@ -377,6 +375,157 @@ function ComparisonBar({ deposits, withdrawals }: ComparisonBarProps) {
   );
 }
 
+// Funding Calculator Component
+interface FundingCalculatorProps {
+  maxCapacity: number;
+  monthlyRevenue: number;
+}
+
+function FundingCalculator({ maxCapacity, monthlyRevenue }: FundingCalculatorProps) {
+  const [amount, setAmount] = useState(Math.min(50000, maxCapacity));
+  const [term, setTerm] = useState(12); // months
+
+  // Calculate based on factor rate (typical MCA style)
+  const factorRates: Record<number, number> = {
+    6: 1.15,
+    9: 1.22,
+    12: 1.29,
+    18: 1.38,
+    24: 1.45,
+  };
+
+  const factorRate = factorRates[term] || 1.29;
+  const totalPayback = amount * factorRate;
+  const dailyPayment = totalPayback / (term * 22); // ~22 business days per month
+  const weeklyPayment = dailyPayment * 5;
+  const monthlyPayment = totalPayback / term;
+
+  // Calculate if payment is sustainable (should be less than 15% of monthly revenue)
+  const revenueImpact = (monthlyPayment / monthlyRevenue) * 100;
+  const isSustainable = revenueImpact < 15;
+
+  const presetAmounts = [25000, 50000, 75000, 100000].filter(a => a <= maxCapacity);
+  if (maxCapacity > 100000) {
+    presetAmounts.push(Math.round(maxCapacity / 10000) * 10000);
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Amount Selector */}
+      <div>
+        <label className="block text-sm text-slate-400 mb-3">Funding Amount</label>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {presetAmounts.map((preset) => (
+            <button
+              key={preset}
+              onClick={() => setAmount(preset)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                amount === preset
+                  ? 'bg-emerald-500 text-white'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              {formatCurrency(preset)}
+            </button>
+          ))}
+        </div>
+        <input
+          type="range"
+          min={10000}
+          max={maxCapacity}
+          step={5000}
+          value={amount}
+          onChange={(e) => setAmount(Number(e.target.value))}
+          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+        />
+        <div className="flex justify-between text-xs text-slate-500 mt-1">
+          <span>{formatCurrency(10000)}</span>
+          <span className="text-emerald-400 font-medium">{formatCurrency(amount)}</span>
+          <span>{formatCurrency(maxCapacity)}</span>
+        </div>
+      </div>
+
+      {/* Term Selector */}
+      <div>
+        <label className="block text-sm text-slate-400 mb-3">Repayment Term</label>
+        <div className="flex flex-wrap gap-2">
+          {[6, 9, 12, 18, 24].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTerm(t)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                term === t
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+              }`}
+            >
+              {t} months
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Payment Estimates */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="p-4 rounded-lg bg-slate-800/50 text-center">
+          <p className="text-xs text-slate-400 mb-1">Daily Payment</p>
+          <p className="text-xl font-bold text-emerald-400">{formatCurrency(dailyPayment)}</p>
+        </div>
+        <div className="p-4 rounded-lg bg-slate-800/50 text-center">
+          <p className="text-xs text-slate-400 mb-1">Weekly Payment</p>
+          <p className="text-xl font-bold text-cyan-400">{formatCurrency(weeklyPayment)}</p>
+        </div>
+        <div className="p-4 rounded-lg bg-slate-800/50 text-center">
+          <p className="text-xs text-slate-400 mb-1">Monthly Payment</p>
+          <p className="text-xl font-bold">{formatCurrency(monthlyPayment)}</p>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="p-4 rounded-lg bg-slate-800/30 border border-white/5">
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="flex justify-between">
+            <span className="text-slate-400">Funding Amount:</span>
+            <span className="font-medium">{formatCurrency(amount)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">Factor Rate:</span>
+            <span className="font-medium">{factorRate.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">Total Payback:</span>
+            <span className="font-medium">{formatCurrency(totalPayback)}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">Cost of Capital:</span>
+            <span className="font-medium text-amber-400">{formatCurrency(totalPayback - amount)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Sustainability Indicator */}
+      <div className={`p-4 rounded-lg ${isSustainable ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
+        <div className="flex items-start gap-3">
+          {isSustainable ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+          ) : (
+            <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+          )}
+          <div>
+            <p className={`font-medium ${isSustainable ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {isSustainable ? 'Sustainable Payment Level' : 'High Payment Relative to Revenue'}
+            </p>
+            <p className="text-sm text-slate-400 mt-1">
+              Monthly payment represents {revenueImpact.toFixed(1)}% of your average monthly revenue.
+              {!isSustainable && ' Consider a smaller amount or longer term.'}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Navigation Component
 function Nav() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -548,7 +697,7 @@ function GetStartedPage() {
     setIsLoading(true);
 
     try {
-      const { lead, isReturning } = await api.captureLead(email, businessName);
+      const { lead } = await api.captureLead(email, businessName);
 
       // Store lead info in session
       const leadInfo: LeadInfo = {
@@ -1498,6 +1647,12 @@ function ReportView({ data }: { data: FinancialData }) {
               ))}
             </div>
           </div>
+
+          {/* Funding Calculator */}
+          <FundingCalculator
+            maxCapacity={data.fundabilityAssessment.estimatedFundingCapacity}
+            monthlyRevenue={data.revenueAnalysis.estimatedMonthlyRevenue}
+          />
 
           <div className="p-6 rounded-xl bg-gradient-to-r from-emerald-900/50 to-cyan-900/50 border border-emerald-500/20">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
