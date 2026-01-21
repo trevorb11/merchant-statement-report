@@ -21,7 +21,6 @@ import {
   Calendar,
   CreditCard,
   PieChart,
-  ChevronRight,
   AlertCircle,
   Info,
   Loader2,
@@ -355,6 +354,7 @@ interface ComparisonBarProps {
 }
 
 function ComparisonBar({ deposits, withdrawals }: ComparisonBarProps) {
+  const { isDark } = useTheme();
   const total = deposits + withdrawals;
   const depositPct = (deposits / total) * 100;
   const withdrawalPct = (withdrawals / total) * 100;
@@ -362,10 +362,10 @@ function ComparisonBar({ deposits, withdrawals }: ComparisonBarProps) {
   return (
     <div className="space-y-2">
       <div className="flex justify-between text-sm">
-        <span className="text-emerald-400">Deposits: {formatCurrency(deposits)}</span>
-        <span className="text-red-400">Withdrawals: {formatCurrency(withdrawals)}</span>
+        <span className="text-emerald-500 font-medium">Deposits: {formatCurrency(deposits)}</span>
+        <span className="text-red-500 font-medium">Withdrawals: {formatCurrency(withdrawals)}</span>
       </div>
-      <div className="h-4 rounded-full overflow-hidden flex bg-slate-800">
+      <div className={`h-4 rounded-full overflow-hidden flex ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
         <div
           className="bg-emerald-500 h-full transition-all duration-500"
           style={{ width: `${depositPct}%` }}
@@ -375,7 +375,7 @@ function ComparisonBar({ deposits, withdrawals }: ComparisonBarProps) {
           style={{ width: `${withdrawalPct}%` }}
         />
       </div>
-      <div className="flex justify-between text-xs text-slate-500">
+      <div className={`flex justify-between text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
         <span>{depositPct.toFixed(0)}%</span>
         <span>{withdrawalPct.toFixed(0)}%</span>
       </div>
@@ -390,8 +390,14 @@ interface FundingCalculatorProps {
 }
 
 function FundingCalculator({ maxCapacity, monthlyRevenue }: FundingCalculatorProps) {
+  const { isDark } = useTheme();
   const [amount, setAmount] = useState(Math.min(50000, maxCapacity));
   const [term, setTerm] = useState(12); // months
+
+  const textMuted = isDark ? 'text-slate-400' : 'text-slate-500';
+  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
+  const cardInner = isDark ? 'bg-slate-800/50' : 'bg-slate-100';
+  const buttonInactive = isDark ? 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50' : 'bg-slate-100 text-slate-600 hover:bg-slate-200';
 
   // Calculate based on factor rate (typical MCA style)
   const factorRates: Record<number, number> = {
@@ -421,7 +427,7 @@ function FundingCalculator({ maxCapacity, monthlyRevenue }: FundingCalculatorPro
     <div className="space-y-6">
       {/* Amount Selector */}
       <div>
-        <label className="block text-sm text-slate-400 mb-3">Funding Amount</label>
+        <label className={`block text-sm ${textMuted} mb-3`}>Funding Amount</label>
         <div className="flex flex-wrap gap-2 mb-3">
           {presetAmounts.map((preset) => (
             <button
@@ -430,7 +436,7 @@ function FundingCalculator({ maxCapacity, monthlyRevenue }: FundingCalculatorPro
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 amount === preset
                   ? 'bg-emerald-500 text-white'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+                  : buttonInactive
               }`}
             >
               {formatCurrency(preset)}
@@ -444,18 +450,18 @@ function FundingCalculator({ maxCapacity, monthlyRevenue }: FundingCalculatorPro
           step={5000}
           value={amount}
           onChange={(e) => setAmount(Number(e.target.value))}
-          className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+          className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-emerald-500 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}
         />
-        <div className="flex justify-between text-xs text-slate-500 mt-1">
+        <div className={`flex justify-between text-xs ${textMuted} mt-1`}>
           <span>{formatCurrency(10000)}</span>
-          <span className="text-emerald-400 font-medium">{formatCurrency(amount)}</span>
+          <span className="text-emerald-500 font-medium">{formatCurrency(amount)}</span>
           <span>{formatCurrency(maxCapacity)}</span>
         </div>
       </div>
 
       {/* Term Selector */}
       <div>
-        <label className="block text-sm text-slate-400 mb-3">Repayment Term</label>
+        <label className={`block text-sm ${textMuted} mb-3`}>Repayment Term</label>
         <div className="flex flex-wrap gap-2">
           {[6, 9, 12, 18, 24].map((t) => (
             <button
@@ -464,7 +470,7 @@ function FundingCalculator({ maxCapacity, monthlyRevenue }: FundingCalculatorPro
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 term === t
                   ? 'bg-cyan-500 text-white'
-                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50'
+                  : buttonInactive
               }`}
             >
               {t} months
@@ -475,55 +481,55 @@ function FundingCalculator({ maxCapacity, monthlyRevenue }: FundingCalculatorPro
 
       {/* Payment Estimates */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="p-4 rounded-lg bg-slate-800/50 text-center">
-          <p className="text-xs text-slate-400 mb-1">Daily Payment</p>
-          <p className="text-xl font-bold text-emerald-400">{formatCurrency(dailyPayment)}</p>
+        <div className={`p-4 rounded-lg ${cardInner} text-center`}>
+          <p className={`text-xs ${textMuted} mb-1`}>Daily Payment</p>
+          <p className="text-xl font-bold text-emerald-500">{formatCurrency(dailyPayment)}</p>
         </div>
-        <div className="p-4 rounded-lg bg-slate-800/50 text-center">
-          <p className="text-xs text-slate-400 mb-1">Weekly Payment</p>
-          <p className="text-xl font-bold text-cyan-400">{formatCurrency(weeklyPayment)}</p>
+        <div className={`p-4 rounded-lg ${cardInner} text-center`}>
+          <p className={`text-xs ${textMuted} mb-1`}>Weekly Payment</p>
+          <p className="text-xl font-bold text-cyan-500">{formatCurrency(weeklyPayment)}</p>
         </div>
-        <div className="p-4 rounded-lg bg-slate-800/50 text-center">
-          <p className="text-xs text-slate-400 mb-1">Monthly Payment</p>
-          <p className="text-xl font-bold">{formatCurrency(monthlyPayment)}</p>
+        <div className={`p-4 rounded-lg ${cardInner} text-center`}>
+          <p className={`text-xs ${textMuted} mb-1`}>Monthly Payment</p>
+          <p className={`text-xl font-bold ${textPrimary}`}>{formatCurrency(monthlyPayment)}</p>
         </div>
       </div>
 
       {/* Summary */}
-      <div className="p-4 rounded-lg bg-slate-800/30 border border-white/5">
+      <div className={`p-4 rounded-lg border ${isDark ? 'bg-slate-800/30 border-white/5' : 'bg-slate-50 border-slate-200'}`}>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex justify-between">
-            <span className="text-slate-400">Funding Amount:</span>
-            <span className="font-medium">{formatCurrency(amount)}</span>
+            <span className={textMuted}>Funding Amount:</span>
+            <span className={`font-medium ${textPrimary}`}>{formatCurrency(amount)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Factor Rate:</span>
-            <span className="font-medium">{factorRate.toFixed(2)}</span>
+            <span className={textMuted}>Factor Rate:</span>
+            <span className={`font-medium ${textPrimary}`}>{factorRate.toFixed(2)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Total Payback:</span>
-            <span className="font-medium">{formatCurrency(totalPayback)}</span>
+            <span className={textMuted}>Total Payback:</span>
+            <span className={`font-medium ${textPrimary}`}>{formatCurrency(totalPayback)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-400">Cost of Capital:</span>
-            <span className="font-medium text-amber-400">{formatCurrency(totalPayback - amount)}</span>
+            <span className={textMuted}>Cost of Capital:</span>
+            <span className="font-medium text-amber-500">{formatCurrency(totalPayback - amount)}</span>
           </div>
         </div>
       </div>
 
       {/* Sustainability Indicator */}
-      <div className={`p-4 rounded-lg ${isSustainable ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
+      <div className={`p-4 rounded-lg border ${isSustainable ? (isDark ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200') : (isDark ? 'bg-amber-500/10 border-amber-500/20' : 'bg-amber-50 border-amber-200')}`}>
         <div className="flex items-start gap-3">
           {isSustainable ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
           ) : (
-            <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
           )}
           <div>
-            <p className={`font-medium ${isSustainable ? 'text-emerald-400' : 'text-amber-400'}`}>
+            <p className={`font-medium ${isSustainable ? 'text-emerald-500' : 'text-amber-500'}`}>
               {isSustainable ? 'Sustainable Payment Level' : 'High Payment Relative to Revenue'}
             </p>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className={`text-sm ${textMuted} mt-1`}>
               Monthly payment represents {revenueImpact.toFixed(1)}% of your average monthly revenue.
               {!isSustainable && ' Consider a smaller amount or longer term.'}
             </p>
@@ -537,17 +543,22 @@ function FundingCalculator({ maxCapacity, monthlyRevenue }: FundingCalculatorPro
 // Navigation Component
 function Nav() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { isDark } = useTheme();
   const navigate = useNavigate();
 
+  const navBg = isDark ? 'bg-slate-950/80 border-white/5' : 'bg-white/80 border-slate-200';
+  const textMuted = isDark ? 'text-slate-400 hover:text-white' : 'text-slate-500 hover:text-slate-900';
+  const textPrimary = isDark ? 'text-white' : 'text-slate-900';
+
   return (
-    <nav className="relative z-10 border-b border-white/5 px-6 py-4 bg-slate-950/80 backdrop-blur sticky top-0">
+    <nav className={`relative z-10 border-b px-6 py-4 backdrop-blur sticky top-0 ${navBg}`}>
       <div className="max-w-6xl mx-auto flex items-center justify-between">
         <button onClick={() => navigate('/')} className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-cyan-500 flex items-center justify-center text-white">
             <TrendingUp className="w-5 h-5" />
           </div>
-          <span className="text-xl font-semibold">
-            Today Capital <span className="text-emerald-400 font-light">Group</span>
+          <span className={`text-xl font-semibold ${textPrimary}`}>
+            Today Capital <span className="text-emerald-500 font-light">Group</span>
           </span>
         </button>
         <div className="flex items-center gap-4">
@@ -555,17 +566,17 @@ function Nav() {
             <>
               <button
                 onClick={() => navigate('/dashboard')}
-                className="text-sm text-slate-400 hover:text-white flex items-center gap-2"
+                className={`text-sm flex items-center gap-2 ${textMuted}`}
               >
                 <History className="w-4 h-4" /> Dashboard
               </button>
               <button
                 onClick={() => navigate('/upload')}
-                className="text-sm text-slate-400 hover:text-white flex items-center gap-2"
+                className={`text-sm flex items-center gap-2 ${textMuted}`}
               >
                 <Plus className="w-4 h-4" /> New Analysis
               </button>
-              <div className="text-sm text-slate-400 flex items-center gap-2">
+              <div className={`text-sm flex items-center gap-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 <User className="w-4 h-4" />
                 {user?.businessName || user?.email}
               </div>
@@ -574,7 +585,7 @@ function Nav() {
                   logout();
                   navigate('/');
                 }}
-                className="text-sm text-slate-400 hover:text-white flex items-center gap-2"
+                className={`text-sm flex items-center gap-2 ${textMuted}`}
               >
                 <LogOut className="w-4 h-4" /> Logout
               </button>
@@ -583,13 +594,13 @@ function Nav() {
             <>
               <button
                 onClick={() => navigate('/login')}
-                className="text-sm text-slate-400 hover:text-white"
+                className={`text-sm ${textMuted}`}
               >
                 Login
               </button>
               <button
                 onClick={() => navigate('/register')}
-                className="text-sm bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg"
+                className="text-sm bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg"
               >
                 Sign Up
               </button>
@@ -1414,74 +1425,6 @@ function ReportView({ data }: { data: FinancialData }) {
         </div>
       </div>
 
-      {/* Score Cards */}
-      <div className="grid md:grid-cols-4 gap-4">
-        <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-          <p className="text-sm text-slate-400 mb-1">Fundability Score</p>
-          <div className="flex items-baseline gap-2">
-            <span
-              className={`text-4xl font-bold ${getScoreColor(data.fundabilityAssessment.score)}`}
-            >
-              {data.fundabilityAssessment.score}
-            </span>
-            <span className="text-slate-500">/100</span>
-          </div>
-          <span
-            className={`inline-block mt-2 px-2 py-1 rounded text-xs ${getScoreBg(
-              data.fundabilityAssessment.score
-            )} ${getScoreColor(data.fundabilityAssessment.score)}`}
-          >
-            {data.fundabilityAssessment.rating}
-          </span>
-        </div>
-
-        <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-          <p className="text-sm text-slate-400 mb-1">Cash Flow Health</p>
-          <div className="flex items-baseline gap-2">
-            <span className={`text-4xl font-bold ${getScoreColor(data.cashFlowHealth.score)}`}>
-              {data.cashFlowHealth.score}
-            </span>
-            <span className="text-slate-500">/100</span>
-          </div>
-          <span
-            className={`inline-block mt-2 px-2 py-1 rounded text-xs ${getScoreBg(
-              data.cashFlowHealth.score
-            )} ${getScoreColor(data.cashFlowHealth.score)}`}
-          >
-            {data.cashFlowHealth.rating}
-          </span>
-        </div>
-
-        <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-          <p className="text-sm text-slate-400 mb-1">Avg Monthly Revenue</p>
-          <span className="text-3xl font-bold">
-            {formatCurrency(data.revenueAnalysis.estimatedMonthlyRevenue)}
-          </span>
-          <div className="flex items-center gap-1 mt-2 text-sm">
-            <TrendingUp
-              className={`w-4 h-4 ${
-                data.revenueAnalysis.revenueGrowthPercent >= 0 ? 'text-emerald-400' : 'text-red-400'
-              }`}
-            />
-            <span
-              className={
-                data.revenueAnalysis.revenueGrowthPercent >= 0 ? 'text-emerald-400' : 'text-red-400'
-              }
-            >
-              {data.revenueAnalysis.revenueGrowthPercent}%
-            </span>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-xl bg-slate-900/50 border border-white/5">
-          <p className="text-sm text-slate-400 mb-1">Funding Capacity</p>
-          <span className="text-3xl font-bold text-cyan-400">
-            {formatCurrency(data.fundabilityAssessment.estimatedFundingCapacity)}
-          </span>
-          <p className="text-xs text-slate-500 mt-2">Based on cash flow</p>
-        </div>
-      </div>
-
       {/* Tabs */}
       <div className={`flex gap-2 overflow-x-auto pb-2 border-b ${isDark ? 'border-white/10' : 'border-slate-200'}`}>
         {[
@@ -1890,10 +1833,17 @@ function ReportView({ data }: { data: FinancialData }) {
           </div>
 
           {/* Funding Calculator */}
-          <FundingCalculator
-            maxCapacity={data.fundabilityAssessment.estimatedFundingCapacity}
-            monthlyRevenue={data.revenueAnalysis.estimatedMonthlyRevenue}
-          />
+          <div className={`p-6 rounded-xl border ${cardClass}`}>
+            <div className="flex items-center gap-2 mb-4">
+              <BarChart3 className="w-5 h-5 text-cyan-500" />
+              <h3 className={`font-semibold ${textPrimary}`}>Payment Calculator</h3>
+            </div>
+            <p className={`text-sm ${textMuted} mb-6`}>See what your payments could look like with different funding amounts</p>
+            <FundingCalculator
+              maxCapacity={data.fundabilityAssessment.estimatedFundingCapacity}
+              monthlyRevenue={data.revenueAnalysis.estimatedMonthlyRevenue}
+            />
+          </div>
 
           {/* CTA */}
           <div className={`p-6 rounded-xl ${isDark ? 'bg-gradient-to-r from-emerald-900/50 to-cyan-900/50 border-emerald-500/20' : 'bg-gradient-to-r from-emerald-50 to-cyan-50 border-emerald-200'} border`}>
