@@ -7,16 +7,26 @@ This is a full-stack application with:
 - **Frontend**: React + TypeScript + Vite + Tailwind CSS (port 5000)
 - **Backend**: Express + TypeScript (port 3001)
 - **Database**: SQLite (better-sqlite3)
+- **AI**: Anthropic Claude for financial analysis
 
 ## Project Structure
 ```
 ├── frontend/          # React frontend
 │   ├── src/           # Source files
+│   │   ├── hooks/     # Custom hooks (useTheme)
+│   │   ├── main.tsx   # Entry point with ThemeProvider
+│   │   └── App.tsx    # Main app components
 │   └── vite.config.ts # Vite configuration
 ├── backend/           # Express backend
 │   └── src/           # Source files
 └── package.json       # Root package with workspaces
 ```
+
+## Recent Changes (Jan 2026)
+- Added light/dark theme support with useTheme hook
+- Redesigned report UI with business-friendly language
+- Improved layout: "Your Business at a Glance" summary cards
+- Theme toggle button in report header (Sun/Moon icons)
 
 ## Development
 - Run `npm run dev` to start both frontend and backend concurrently
