@@ -142,7 +142,8 @@ router.delete('/:id', authMiddleware, (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const statement = findStatementById.get(req.params.id);
+    const statementId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const statement = findStatementById.get(statementId);
 
     if (!statement) {
       res.status(404).json({ error: 'Statement not found' });

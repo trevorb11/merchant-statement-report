@@ -1,4 +1,4 @@
-import Database from 'better-sqlite3';
+import Database, { Database as DatabaseType, Statement as SQLiteStatement } from 'better-sqlite3';
 import path from 'path';
 import fs from 'fs';
 
@@ -8,7 +8,7 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const db = new Database(path.join(dataDir, 'merchant_statements.db'));
+const db: DatabaseType = new Database(path.join(dataDir, 'merchant_statements.db'));
 
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
@@ -104,20 +104,20 @@ export interface User {
   updated_at: string;
 }
 
-export const createUser = db.prepare(`
+export const createUser: SQLiteStatement = db.prepare(`
   INSERT INTO users (id, email, password_hash, business_name, phone)
   VALUES (?, ?, ?, ?, ?)
 `);
 
-export const findUserByEmail = db.prepare<[string], User>(`
+export const findUserByEmail: SQLiteStatement<[string], User> = db.prepare<[string], User>(`
   SELECT * FROM users WHERE email = ?
 `);
 
-export const findUserById = db.prepare<[string], User>(`
+export const findUserById: SQLiteStatement<[string], User> = db.prepare<[string], User>(`
   SELECT * FROM users WHERE id = ?
 `);
 
-export const updateUser = db.prepare(`
+export const updateUser: SQLiteStatement = db.prepare(`
   UPDATE users SET business_name = ?, phone = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `);
 
@@ -132,20 +132,20 @@ export interface Statement {
   uploaded_at: string;
 }
 
-export const createStatement = db.prepare(`
+export const createStatement: SQLiteStatement = db.prepare(`
   INSERT INTO statements (id, user_id, file_name, file_path, file_type, file_size)
   VALUES (?, ?, ?, ?, ?, ?)
 `);
 
-export const findStatementsByUserId = db.prepare<[string], Statement>(`
+export const findStatementsByUserId: SQLiteStatement<[string], Statement> = db.prepare<[string], Statement>(`
   SELECT * FROM statements WHERE user_id = ? ORDER BY uploaded_at DESC
 `);
 
-export const findStatementById = db.prepare<[string], Statement>(`
+export const findStatementById: SQLiteStatement<[string], Statement> = db.prepare<[string], Statement>(`
   SELECT * FROM statements WHERE id = ?
 `);
 
-export const deleteStatement = db.prepare(`
+export const deleteStatement: SQLiteStatement = db.prepare(`
   DELETE FROM statements WHERE id = ?
 `);
 
@@ -159,24 +159,24 @@ export interface Report {
   updated_at: string;
 }
 
-export const createReport = db.prepare(`
+export const createReport: SQLiteStatement = db.prepare(`
   INSERT INTO reports (id, user_id, statement_ids, analysis_data)
   VALUES (?, ?, ?, ?)
 `);
 
-export const findReportsByUserId = db.prepare<[string], Report>(`
+export const findReportsByUserId: SQLiteStatement<[string], Report> = db.prepare<[string], Report>(`
   SELECT * FROM reports WHERE user_id = ? ORDER BY created_at DESC
 `);
 
-export const findLatestReportByUserId = db.prepare<[string], Report>(`
+export const findLatestReportByUserId: SQLiteStatement<[string], Report> = db.prepare<[string], Report>(`
   SELECT * FROM reports WHERE user_id = ? ORDER BY created_at DESC LIMIT 1
 `);
 
-export const findReportById = db.prepare<[string], Report>(`
+export const findReportById: SQLiteStatement<[string], Report> = db.prepare<[string], Report>(`
   SELECT * FROM reports WHERE id = ?
 `);
 
-export const updateReport = db.prepare(`
+export const updateReport: SQLiteStatement = db.prepare(`
   UPDATE reports SET analysis_data = ?, statement_ids = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `);
 
@@ -196,12 +196,12 @@ export interface MonthlySnapshot {
   created_at: string;
 }
 
-export const createMonthlySnapshot = db.prepare(`
+export const createMonthlySnapshot: SQLiteStatement = db.prepare(`
   INSERT INTO monthly_snapshots (id, user_id, report_id, month, month_name, beginning_balance, ending_balance, total_deposits, total_withdrawals, negative_days, average_daily_balance)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 `);
 
-export const findMonthlySnapshotsByUserId = db.prepare<[string], MonthlySnapshot>(`
+export const findMonthlySnapshotsByUserId: SQLiteStatement<[string], MonthlySnapshot> = db.prepare<[string], MonthlySnapshot>(`
   SELECT * FROM monthly_snapshots WHERE user_id = ? ORDER BY month DESC
 `);
 
@@ -219,31 +219,31 @@ export interface Lead {
   updated_at: string;
 }
 
-export const createLead = db.prepare(`
+export const createLead: SQLiteStatement = db.prepare(`
   INSERT INTO leads (id, email, business_name, phone, source)
   VALUES (?, ?, ?, ?, ?)
 `);
 
-export const findLeadByEmail = db.prepare<[string], Lead>(`
+export const findLeadByEmail: SQLiteStatement<[string], Lead> = db.prepare<[string], Lead>(`
   SELECT * FROM leads WHERE email = ? ORDER BY created_at DESC LIMIT 1
 `);
 
-export const findLeadById = db.prepare<[string], Lead>(`
+export const findLeadById: SQLiteStatement<[string], Lead> = db.prepare<[string], Lead>(`
   SELECT * FROM leads WHERE id = ?
 `);
 
-export const updateLeadStatus = db.prepare(`
+export const updateLeadStatus: SQLiteStatement = db.prepare(`
   UPDATE leads SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `);
 
-export const updateLeadAnalysisCompleted = db.prepare(`
+export const updateLeadAnalysisCompleted: SQLiteStatement = db.prepare(`
   UPDATE leads SET analysis_completed = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `);
 
-export const convertLeadToUser = db.prepare(`
+export const convertLeadToUser: SQLiteStatement = db.prepare(`
   UPDATE leads SET converted_user_id = ?, status = 'converted', updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `);
 
-export const findAllLeads = db.prepare<[], Lead>(`
+export const findAllLeads: SQLiteStatement<[], Lead> = db.prepare<[], Lead>(`
   SELECT * FROM leads ORDER BY created_at DESC
 `);

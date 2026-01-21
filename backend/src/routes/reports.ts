@@ -143,7 +143,8 @@ router.get('/:id', authMiddleware, (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const report = findReportById.get(req.params.id);
+    const reportId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const report = findReportById.get(reportId);
 
     if (!report) {
       res.status(404).json({ error: 'Report not found' });
@@ -188,7 +189,8 @@ router.post('/:id/add-statements', authMiddleware, async (req: AuthRequest, res:
       return;
     }
 
-    const report = findReportById.get(req.params.id);
+    const reportId = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const report = findReportById.get(reportId);
 
     if (!report) {
       res.status(404).json({ error: 'Report not found' });

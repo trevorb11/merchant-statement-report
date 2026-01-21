@@ -62,7 +62,8 @@ router.post('/', async (req: Request, res: Response) => {
 // Get lead by ID
 router.get('/:id', (req: Request, res: Response) => {
   try {
-    const lead = findLeadById.get(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const lead = findLeadById.get(id);
 
     if (!lead) {
       res.status(404).json({ error: 'Lead not found' });
@@ -87,7 +88,8 @@ router.get('/:id', (req: Request, res: Response) => {
 // Mark lead as having completed analysis
 router.post('/:id/analysis-completed', (req: Request, res: Response) => {
   try {
-    const lead = findLeadById.get(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const lead = findLeadById.get(id);
 
     if (!lead) {
       res.status(404).json({ error: 'Lead not found' });
@@ -113,7 +115,8 @@ router.patch('/:id/status', (req: Request, res: Response) => {
       return;
     }
 
-    const lead = findLeadById.get(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const lead = findLeadById.get(id);
 
     if (!lead) {
       res.status(404).json({ error: 'Lead not found' });
