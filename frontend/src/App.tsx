@@ -676,30 +676,6 @@ function LandingPage() {
           </div>
         </section>
 
-        {/* Social Proof Stats */}
-        <section className="border-y border-white/5 bg-white/[0.02] py-10">
-          <div className="max-w-5xl mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              <div>
-                <div className="text-3xl font-bold text-emerald-400">2,500+</div>
-                <div className="text-sm text-slate-500 mt-1">Businesses Analyzed</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-emerald-400">$47M+</div>
-                <div className="text-sm text-slate-500 mt-1">Funding Secured</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-emerald-400">98%</div>
-                <div className="text-sm text-slate-500 mt-1">Accuracy Rate</div>
-              </div>
-              <div>
-                <div className="text-3xl font-bold text-emerald-400">4.9/5</div>
-                <div className="text-sm text-slate-500 mt-1">User Rating</div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Sample Insights Preview */}
         <section className="max-w-5xl mx-auto px-6 py-20">
           <div className="text-center mb-12">
