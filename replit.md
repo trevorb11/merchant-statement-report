@@ -27,6 +27,14 @@ This is a full-stack application with:
 - Redesigned report UI with business-friendly language
 - Improved layout: "Your Business at a Glance" summary cards
 - Theme toggle button in report header (Sun/Moon icons)
+- Enhanced landing page for business owner appeal:
+  - Trust badges (Bank-Level Security, No Sales Calls, 100% Free)
+  - Social proof stats section (businesses analyzed, funding secured)
+  - Sample insights preview showing funding potential and health score
+  - "How It Works" 3-step section
+  - Testimonials from business owners
+  - Security section with encryption details
+  - Clear time estimate ("Takes less than 2 minutes")
 
 ## Development
 - Run `npm run dev` to start both frontend and backend concurrently
