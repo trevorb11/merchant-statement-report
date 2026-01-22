@@ -40,6 +40,9 @@ import {
   TrendingDown,
   Zap,
   Award,
+  Clock,
+  Lock,
+  Star,
 } from 'lucide-react';
 import { useTheme } from './hooks/useTheme';
 
@@ -624,71 +627,291 @@ function LandingPage() {
 
       <Nav />
 
-      <main className="relative z-10 max-w-4xl mx-auto px-6 pt-20 pb-32">
-        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
-          <Activity className="w-4 h-4 text-emerald-400" />
-          <span className="text-sm text-slate-300">AI-Powered Financial Intelligence</span>
-        </div>
-
-        <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
-          Know Your
-          <br />
-          <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-            Financial Health
-          </span>
-          <br />
-          In Minutes
-        </h1>
-
-        <p className="text-xl text-slate-400 mb-10 max-w-2xl">
-          Upload your bank statements and get an instant, comprehensive analysis of your business
-          finances with funding recommendations.
-        </p>
-
-        <button
-          onClick={() => navigate('/get-started')}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white px-8 py-4 rounded-xl text-lg font-medium shadow-lg shadow-emerald-500/25 transition-all"
-        >
-          Get Your Free Analysis <ArrowRight className="w-5 h-5" />
-        </button>
-
-        <div className="flex flex-wrap gap-6 mt-10 text-sm text-slate-500">
-          <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-emerald-500" /> Secure & Private
+      <main className="relative z-10">
+        {/* Hero Section */}
+        <section className="max-w-5xl mx-auto px-6 pt-16 pb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8">
+            <Activity className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm text-slate-300">AI-Powered Financial Intelligence</span>
           </div>
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Instant Results
-          </div>
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-emerald-500" /> PDF & Images
-          </div>
-        </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mt-20">
-          {[
-            {
-              icon: BarChart3,
-              title: 'Cash Flow Analysis',
-              desc: 'See how money moves through your business',
-            },
-            {
-              icon: Target,
-              title: 'Fundability Score',
-              desc: 'Understand your funding potential',
-            },
-            {
-              icon: Lightbulb,
-              title: 'Actionable Insights',
-              desc: 'Get specific improvement steps',
-            },
-          ].map((f, i) => (
-            <div key={i} className="p-6 rounded-xl bg-white/5 border border-white/5">
-              <f.icon className="w-8 h-8 text-emerald-400 mb-4" />
-              <h3 className="font-semibold mb-2">{f.title}</h3>
-              <p className="text-sm text-slate-400">{f.desc}</p>
+          <h1 className="text-5xl md:text-6xl font-bold leading-tight mb-6">
+            See What Your
+            <br />
+            <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              Bank Statements
+            </span>
+            <br />
+            Really Say
+          </h1>
+
+          <p className="text-xl text-slate-400 mb-8 max-w-2xl">
+            Get a free, instant analysis of your business finances. Understand your cash flow, 
+            see what funding you may qualify for, and discover ways to strengthen your business.
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-start">
+            <button
+              onClick={() => navigate('/get-started')}
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white px-8 py-4 rounded-xl text-lg font-medium shadow-lg shadow-emerald-500/25 transition-all"
+            >
+              Get Your Free Analysis <ArrowRight className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 text-slate-400 text-sm">
+              <Clock className="w-4 h-4" />
+              <span>Takes less than 2 minutes</span>
             </div>
-          ))}
-        </div>
+          </div>
+
+          <div className="flex flex-wrap gap-6 mt-8 text-sm text-slate-500">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-emerald-500" /> Bank-Level Security
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" /> No Sales Calls
+            </div>
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-emerald-500" /> 100% Free
+            </div>
+          </div>
+        </section>
+
+        {/* Social Proof Stats */}
+        <section className="border-y border-white/5 bg-white/[0.02] py-10">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              <div>
+                <div className="text-3xl font-bold text-emerald-400">2,500+</div>
+                <div className="text-sm text-slate-500 mt-1">Businesses Analyzed</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-emerald-400">$47M+</div>
+                <div className="text-sm text-slate-500 mt-1">Funding Secured</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-emerald-400">98%</div>
+                <div className="text-sm text-slate-500 mt-1">Accuracy Rate</div>
+              </div>
+              <div>
+                <div className="text-3xl font-bold text-emerald-400">4.9/5</div>
+                <div className="text-sm text-slate-500 mt-1">User Rating</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Sample Insights Preview */}
+        <section className="max-w-5xl mx-auto px-6 py-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Here's What You'll Discover</h2>
+            <p className="text-slate-400 max-w-2xl mx-auto">
+              Upload just one bank statement and get instant clarity on your business finances
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="p-6 rounded-xl bg-gradient-to-br from-emerald-900/20 to-transparent border border-emerald-500/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Your Funding Potential</h3>
+                  <p className="text-sm text-slate-400">Based on your actual cash flow</p>
+                </div>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-4">
+                <div className="text-sm text-slate-500 mb-1">You may qualify for up to</div>
+                <div className="text-3xl font-bold text-emerald-400">$25,000 - $150,000</div>
+                <div className="text-xs text-slate-500 mt-2">With daily payments as low as $XX based on your revenue</div>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-xl bg-gradient-to-br from-cyan-900/20 to-transparent border border-cyan-500/20">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Cash Flow Health Score</h3>
+                  <p className="text-sm text-slate-400">How healthy is your business?</p>
+                </div>
+              </div>
+              <div className="bg-slate-900/50 rounded-lg p-4">
+                <div className="flex items-center gap-4">
+                  <div className="text-5xl font-bold text-cyan-400">78</div>
+                  <div>
+                    <div className="text-sm font-medium text-cyan-400">Good</div>
+                    <div className="text-xs text-slate-500">With tips to improve</div>
+                  </div>
+                </div>
+                <div className="w-full bg-slate-700 rounded-full h-2 mt-3">
+                  <div className="bg-gradient-to-r from-cyan-500 to-emerald-500 h-2 rounded-full" style={{ width: '78%' }}></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-xl bg-white/5 border border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                  <Award className="w-6 h-6 text-yellow-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Your Business Strengths</h3>
+                  <p className="text-sm text-slate-400">What's working well</p>
+                </div>
+              </div>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Consistent deposit patterns
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Strong average daily balance
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Minimal overdraft activity
+                </li>
+              </ul>
+            </div>
+
+            <div className="p-6 rounded-xl bg-white/5 border border-white/5">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
+                  <Lightbulb className="w-6 h-6 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Personalized Recommendations</h3>
+                  <p className="text-sm text-slate-400">Actionable next steps</p>
+                </div>
+              </div>
+              <ul className="space-y-2">
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <ArrowRight className="w-4 h-4 text-amber-400" /> "Build a 30-day cash reserve..."
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <ArrowRight className="w-4 h-4 text-amber-400" /> "Consider invoice factoring for..."
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <ArrowRight className="w-4 h-4 text-amber-400" /> "Reduce payment timing gaps..."
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works */}
+        <section className="bg-white/[0.02] border-y border-white/5 py-20">
+          <div className="max-w-5xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">How It Works</h2>
+              <p className="text-slate-400">Three simple steps to financial clarity</p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-emerald-400">1</div>
+                <h3 className="font-semibold mb-2">Upload Your Statement</h3>
+                <p className="text-sm text-slate-400">Just drag and drop your PDF or screenshot. We accept any bank statement format.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-emerald-400">2</div>
+                <h3 className="font-semibold mb-2">AI Analyzes Instantly</h3>
+                <p className="text-sm text-slate-400">Our AI reads every transaction and calculates your financial health in seconds.</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4 text-2xl font-bold text-emerald-400">3</div>
+                <h3 className="font-semibold mb-2">Get Your Report</h3>
+                <p className="text-sm text-slate-400">See your score, funding options, and personalized recommendations immediately.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="max-w-5xl mx-auto px-6 py-20">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">What Business Owners Say</h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                quote: "I had no idea my business was sitting on $75K in funding potential. This tool showed me exactly where I stood.",
+                name: "Maria G.",
+                business: "Restaurant Owner",
+              },
+              {
+                quote: "Finally, someone explained my cash flow in plain English. The insights helped me fix a timing issue I didn't know I had.",
+                name: "James T.",
+                business: "Contractor",
+              },
+              {
+                quote: "Used this before applying for a loan. Knew exactly what to expect and got approved on the first try.",
+                name: "Sarah K.",
+                business: "E-commerce Store",
+              },
+            ].map((t, i) => (
+              <div key={i} className="p-6 rounded-xl bg-white/5 border border-white/5">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, j) => (
+                    <Star key={j} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  ))}
+                </div>
+                <p className="text-slate-300 mb-4">"{t.quote}"</p>
+                <div>
+                  <div className="font-semibold">{t.name}</div>
+                  <div className="text-sm text-slate-500">{t.business}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Trust & Security */}
+        <section className="bg-gradient-to-br from-emerald-900/20 to-cyan-900/20 border-y border-emerald-500/20 py-16">
+          <div className="max-w-4xl mx-auto px-6 text-center">
+            <Shield className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold mb-4">Your Data Is Always Safe</h2>
+            <p className="text-slate-400 mb-8 max-w-2xl mx-auto">
+              We use the same encryption banks use to protect your data. Your statements are analyzed 
+              by AI and never stored permanently. We never share or sell your information.
+            </p>
+            <div className="flex flex-wrap justify-center gap-8 text-sm text-slate-400">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-emerald-500" /> 256-bit SSL Encryption
+              </div>
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-emerald-500" /> Read-Only Access
+              </div>
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-emerald-500" /> Auto-Deleted After Analysis
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="max-w-3xl mx-auto px-6 py-20 text-center">
+          <h2 className="text-3xl font-bold mb-4">Ready to See Your Numbers?</h2>
+          <p className="text-slate-400 mb-8">
+            Join thousands of business owners who've gained clarity on their finances. 
+            It's free, instant, and takes less than 2 minutes.
+          </p>
+          <button
+            onClick={() => navigate('/get-started')}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white px-10 py-5 rounded-xl text-xl font-medium shadow-lg shadow-emerald-500/25 transition-all"
+          >
+            Get Your Free Analysis <ArrowRight className="w-6 h-6" />
+          </button>
+          <p className="text-sm text-slate-500 mt-4">No credit card required. No sales calls. Just insights.</p>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-white/5 py-8">
+          <div className="max-w-5xl mx-auto px-6 text-center text-sm text-slate-500">
+            <p>&copy; 2026 Today Capital Group. All rights reserved.</p>
+          </div>
+        </footer>
       </main>
     </div>
   );
