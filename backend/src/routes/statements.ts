@@ -220,6 +220,83 @@ router.post('/analyze', authMiddleware, async (req: AuthRequest, res: Response) 
   }
 });
 
+// Analyze combined: existing statements + new uploads (authenticated)
+router.post(
+  '/analyze-combined',
+  authMiddleware,
+  upload.array('files', 10),
+  async (req: AuthRequest, res: Response) => {
+    const newFiles = req.files as Express.Multer.File[];
+
+    try {
+      if (!req.userId) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const existingStatementIds: string[] = req.body.existingStatementIds 
+        ? JSON.parse(req.body.existingStatementIds) 
+        : [];
+
+      const allFileInputs: FileInput[] = [];
+
+      // Add existing statements
+      for (const id of existingStatementIds) {
+        const statement = findStatementById.get(id);
+        if (statement && statement.user_id === req.userId) {
+          allFileInputs.push({
+            filePath: statement.file_path,
+            fileName: statement.file_name,
+            fileType: statement.file_type,
+          });
+        }
+      }
+
+      // Collect all statement IDs (existing + newly created)
+      const allStatementIds: string[] = [...existingStatementIds];
+
+      // Add newly uploaded files and save them as statements
+      if (newFiles && newFiles.length > 0) {
+        for (const file of newFiles) {
+          const statementId = uuidv4();
+          createStatement.run(
+            statementId,
+            req.userId,
+            file.originalname,
+            file.path,
+            file.mimetype,
+            file.size
+          );
+          allStatementIds.push(statementId);
+          allFileInputs.push({
+            filePath: file.path,
+            fileName: file.originalname,
+            fileType: file.mimetype,
+          });
+        }
+      }
+
+      if (allFileInputs.length === 0) {
+        res.status(400).json({ error: 'No statements to analyze' });
+        return;
+      }
+
+      // Run analysis on all files
+      const analysis = await analyzeStatements(allFileInputs);
+
+      res.json({
+        message: 'Analysis completed successfully',
+        analysis,
+        statementIds: allStatementIds,
+        totalStatements: allFileInputs.length,
+      });
+    } catch (error) {
+      console.error('Combined analysis error:', error);
+      res.status(500).json({ error: 'Failed to analyze statements' });
+    }
+  }
+);
+
 // Quick analyze (no auth required - for demo/landing page)
 // Files are uploaded temporarily and deleted after analysis
 router.post(

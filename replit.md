@@ -35,6 +35,11 @@ This is a full-stack application with:
   - Testimonials from business owners
   - Security section with encryption details
   - Clear time estimate ("Takes less than 2 minutes")
+- Added "Add More Statements" feature:
+  - Button in report header to add more statements
+  - Upload page shows existing statements with checkboxes
+  - Users can select which existing + new statements to analyze together
+  - Combined analysis endpoint for merging statement data
 
 ## Development
 - Run `npm run dev` to start both frontend and backend concurrently

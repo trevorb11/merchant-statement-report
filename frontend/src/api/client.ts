@@ -119,6 +119,16 @@ class ApiClient {
     });
   }
 
+  async analyzeWithExisting(newFiles: File[], existingStatementIds: string[]) {
+    const formData = new FormData();
+    newFiles.forEach((file) => formData.append('files', file));
+    formData.append('existingStatementIds', JSON.stringify(existingStatementIds));
+    return this.request<{ analysis: any; statementIds: string[] }>('/statements/analyze-combined', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
   // Report endpoints
   async createReport(statementIds: string[], analysis: any) {
     return this.request<{ report: any }>('/reports', {

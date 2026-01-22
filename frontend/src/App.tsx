@@ -103,7 +103,9 @@ function TrendChart({
 }: TrendChartProps) {
   if (data.length === 0) return null;
 
-  const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+  const width = 400;
+  const padding = { top: 20, right: 30, bottom: 40, left: 60 };
+  const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
   const values = data.map(d => d.value);
@@ -111,37 +113,32 @@ function TrendChart({
   const maxValue = Math.max(...values);
   const valueRange = maxValue - minValue || 1;
 
-  // Calculate points
   const points = data.map((d, i) => {
-    const x = padding.left + (i / (data.length - 1 || 1)) * (100 - padding.left - padding.right);
+    const x = padding.left + (i / (data.length - 1 || 1)) * chartWidth;
     const y = padding.top + chartHeight - ((d.value - minValue) / valueRange) * chartHeight;
     return { x, y, ...d };
   });
 
-  // Create SVG path
   const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
   const areaPath = `${linePath} L ${points[points.length - 1].x} ${padding.top + chartHeight} L ${points[0].x} ${padding.top + chartHeight} Z`;
 
-  // Y-axis labels
   const yLabels = [maxValue, (maxValue + minValue) / 2, minValue];
 
   return (
     <div className="w-full" style={{ height }}>
-      <svg viewBox={`0 0 100 ${height}`} preserveAspectRatio="none" className="w-full h-full">
-        {/* Grid lines */}
+      <svg viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet" className="w-full h-full">
         {[0, 0.5, 1].map((ratio, i) => (
           <line
             key={i}
             x1={padding.left}
             y1={padding.top + chartHeight * ratio}
-            x2={100 - padding.right}
+            x2={width - padding.right}
             y2={padding.top + chartHeight * ratio}
-            stroke="rgba(255,255,255,0.05)"
-            strokeWidth="0.5"
+            stroke="rgba(255,255,255,0.1)"
+            strokeWidth="1"
           />
         ))}
 
-        {/* Area fill */}
         {showArea && (
           <path
             d={areaPath}
@@ -149,47 +146,42 @@ function TrendChart({
           />
         )}
 
-        {/* Line */}
         <path
           d={linePath}
           fill="none"
           stroke={color}
-          strokeWidth="2"
-          vectorEffect="non-scaling-stroke"
+          strokeWidth="3"
         />
 
-        {/* Data points */}
         {points.map((p, i) => (
           <g key={i}>
             <circle
               cx={p.x}
               cy={p.y}
-              r="3"
+              r="5"
               fill={color}
-              vectorEffect="non-scaling-stroke"
             />
-            {/* X-axis labels */}
             <text
               x={p.x}
-              y={height - 10}
+              y={height - 12}
               textAnchor="middle"
-              className="fill-slate-500"
-              style={{ fontSize: '8px' }}
+              className="fill-slate-400"
+              fontSize="12"
+              fontWeight="500"
             >
               {p.label}
             </text>
           </g>
         ))}
 
-        {/* Y-axis labels */}
         {yLabels.map((val, i) => (
           <text
             key={i}
-            x={padding.left - 5}
-            y={padding.top + (i * chartHeight / 2) + 3}
+            x={padding.left - 8}
+            y={padding.top + (i * chartHeight / 2) + 4}
             textAnchor="end"
-            className="fill-slate-500"
-            style={{ fontSize: '7px' }}
+            className="fill-slate-400"
+            fontSize="11"
           >
             {formatValue(val)}
           </text>
@@ -1221,6 +1213,8 @@ function RegisterPage() {
 // Upload Page
 function UploadPage() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [existingStatements, setExistingStatements] = useState<Statement[]>([]);
+  const [selectedExistingIds, setSelectedExistingIds] = useState<Set<string>>(new Set());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -1247,6 +1241,28 @@ function UploadPage() {
     }
   }, []);
 
+  // Load existing statements for authenticated users
+  useEffect(() => {
+    if (isAuthenticated) {
+      api.getStatements().then(({ statements }) => {
+        setExistingStatements(statements);
+        setSelectedExistingIds(new Set(statements.map((s: Statement) => s.id)));
+      }).catch(() => {});
+    }
+  }, [isAuthenticated]);
+
+  const toggleExistingStatement = (id: string) => {
+    setSelectedExistingIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
   const handleFileUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
@@ -1266,8 +1282,11 @@ function UploadPage() {
   }, []);
 
   const handleAnalyze = useCallback(async () => {
-    if (uploadedFiles.length === 0) {
-      setError('Please upload at least one bank statement');
+    const hasNewFiles = uploadedFiles.length > 0;
+    const hasExistingSelected = selectedExistingIds.size > 0;
+    
+    if (!hasNewFiles && !hasExistingSelected) {
+      setError('Please upload at least one bank statement or select existing statements');
       return;
     }
 
@@ -1280,28 +1299,37 @@ function UploadPage() {
     }, 600);
 
     try {
-      const files = uploadedFiles.map((f) => f.file);
-      const { analysis, saved } = await api.quickAnalyze(files);
+      let analysis;
+      let saved = false;
+      let statementIds: string[] = [];
+      
+      if (isAuthenticated) {
+        const newFiles = uploadedFiles.map((f) => f.file);
+        const existingIds = Array.from(selectedExistingIds);
+        const result = await api.analyzeWithExisting(newFiles, existingIds);
+        analysis = result.analysis;
+        statementIds = result.statementIds || [];
+        saved = true;
+      } else {
+        const files = uploadedFiles.map((f) => f.file);
+        const result = await api.quickAnalyze(files);
+        analysis = result.analysis;
+        saved = result.saved;
+      }
 
       clearInterval(progressInterval);
       setAnalysisProgress(100);
 
-      // Mark lead as having completed analysis
       if (leadInfo?.id) {
         try {
           await api.markLeadAnalysisCompleted(leadInfo.id);
-        } catch (e) {
-          // Non-critical, continue anyway
-        }
+        } catch (e) {}
       }
 
-      // If user is authenticated and analysis was saved, create a report
       if (isAuthenticated && saved) {
-        // The statements were already saved, now create a report
-        const { report } = await api.createReport([], analysis);
+        const { report } = await api.createReport(statementIds, analysis);
         navigate(`/report/${report.id}`);
       } else {
-        // Store analysis in session for non-authenticated users
         sessionStorage.setItem('analysis_result', JSON.stringify(analysis));
         navigate('/report/preview');
       }
@@ -1311,7 +1339,7 @@ function UploadPage() {
       setError(err instanceof Error ? err.message : 'Analysis failed');
       setIsAnalyzing(false);
     }
-  }, [uploadedFiles, isAuthenticated, navigate, leadInfo]);
+  }, [uploadedFiles, selectedExistingIds, isAuthenticated, navigate, leadInfo]);
 
   if (isAnalyzing) {
     return (
@@ -1362,6 +1390,48 @@ function UploadPage() {
         {error && (
           <div className="mb-6 p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
             {error}
+          </div>
+        )}
+
+        {/* Existing Statements Section for authenticated users */}
+        {isAuthenticated && existingStatements.length > 0 && (
+          <div className="mb-8 p-6 rounded-xl bg-slate-900/50 border border-white/5">
+            <h3 className="font-medium flex items-center gap-2 mb-4">
+              <History className="w-5 h-5 text-cyan-400" />
+              Your Previously Uploaded Statements
+            </h3>
+            <p className="text-sm text-slate-400 mb-4">
+              Select which statements to include in your analysis. New uploads will be combined with selected statements.
+            </p>
+            <div className="space-y-2">
+              {existingStatements.map((statement) => (
+                <label
+                  key={statement.id}
+                  className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${
+                    selectedExistingIds.has(statement.id)
+                      ? 'bg-emerald-500/10 border border-emerald-500/30'
+                      : 'bg-slate-800/50 border border-white/5 hover:border-white/10'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedExistingIds.has(statement.id)}
+                    onChange={() => toggleExistingStatement(statement.id)}
+                    className="w-4 h-4 rounded border-slate-600 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 bg-slate-700"
+                  />
+                  <FileText className={`w-5 h-5 ${selectedExistingIds.has(statement.id) ? 'text-emerald-400' : 'text-slate-400'}`} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate">{statement.fileName}</p>
+                    <p className="text-xs text-slate-500">
+                      Uploaded {new Date(statement.uploadedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </label>
+              ))}
+            </div>
+            <p className="text-xs text-slate-500 mt-3">
+              {selectedExistingIds.size} of {existingStatements.length} statements selected
+            </p>
           </div>
         )}
 
@@ -1520,6 +1590,8 @@ function ThemeToggle() {
 function ReportView({ data }: { data: FinancialData }) {
   const [activeTab, setActiveTab] = useState('overview');
   const { isDark } = useTheme();
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const cardClass = isDark 
     ? 'bg-slate-900/50 border-white/5' 
@@ -1547,8 +1619,16 @@ function ReportView({ data }: { data: FinancialData }) {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <ThemeToggle />
+          {isAuthenticated && (
+            <button
+              onClick={() => navigate('/upload')}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-500 hover:to-cyan-500 text-white transition-colors"
+            >
+              <Plus className="w-4 h-4" /> Add More Statements
+            </button>
+          )}
           <button
             onClick={() => generatePDF(data)}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -1561,6 +1641,16 @@ function ReportView({ data }: { data: FinancialData }) {
           </button>
         </div>
       </div>
+
+      {/* Add More Statements Info */}
+      {isAuthenticated && (
+        <div className={`p-4 rounded-lg ${isDark ? 'bg-cyan-500/10 border-cyan-500/20' : 'bg-cyan-50 border-cyan-200'} border`}>
+          <p className={`text-sm ${isDark ? 'text-cyan-400' : 'text-cyan-700'}`}>
+            <Info className="w-4 h-4 inline mr-2" />
+            Have more bank statements? Upload additional statements anytime to create an updated analysis with your latest financial data.
+          </p>
+        </div>
+      )}
 
       {/* Quick Snapshot - Key Metrics at a Glance */}
       <div className={`p-6 rounded-xl border ${cardClass}`}>
@@ -2053,9 +2143,14 @@ function ReportView({ data }: { data: FinancialData }) {
                   Our team can help find the best options for your business.
                 </p>
               </div>
-              <button className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 whitespace-nowrap transition-colors">
+              <a 
+                href="https://www.todaycapitalgroup.com/#contact-us" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-lg font-medium flex items-center gap-2 whitespace-nowrap transition-colors"
+              >
                 Contact Today Capital Group <ArrowRight className="w-4 h-4" />
-              </button>
+              </a>
             </div>
           </div>
         </div>
